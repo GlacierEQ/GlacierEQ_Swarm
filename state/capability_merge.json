@@ -1,0 +1,68 @@
+{
+  "ts": "2026-07-17T00:20:00Z",
+  "host": {
+    "cpu": "Intel Core i5-5250U @ 1.60GHz",
+    "cores": 4,
+    "ram_gb": 8,
+    "disk_free_gb": 6.4,
+    "disk_note": "tight — no multi-GB STT installs without reclaim"
+  },
+  "grok_agent": {
+    "strengths": [
+      "MCP mesh (GitHub, Notion, Apple notes/mail, brainsync, supermemory, sequential-thinking, ai-humanizer)",
+      "Skills L0–L5 (token-saver, path, swarm, voice-memo-processor, toolbelt)",
+      "Flippers MICROWAVE zero-LLM (token-100pct measured 98.19%)",
+      "Subagent spawn (explore/plan/general-purpose)",
+      "Legal privacy hard-lock + pure_pointer"
+    ],
+    "weaknesses": [
+      "No native STT (whisper/torch/mlx absent)",
+      "Apple MCP has no Voice Memos tool",
+      "Chat context burn if pure_pointer not used",
+      "Heavy grep/find on spinning disk times out"
+    ]
+  },
+  "mimo_code": {
+    "root": "/Users/kcbflux/mimo-code",
+    "cli": "/Users/kcbflux/.mimocode/bin/mimo",
+    "strengths": [
+      "Full agent product (opencode packages, multi-agent build/plan/compose)",
+      "Rich skill packs: gemini/make-it-heavy, helix-pro-code, apex-*, legal-automation, grok office skills",
+      "GROK_DEV_PIPELINE multi-repo orchestration map",
+      "Persistent memory FTS5 + cross-session",
+      "test-runner standardized (mimo_skills)"
+    ],
+    "weaknesses_this_device": [
+      "packages/opencode/bin/mimo ESM require broken under node; use ~/.mimocode/bin/mimo",
+      "No local STT stack either",
+      "Huge monorepo + node_modules burns disk",
+      "mimo_skills Grok surface only routes test-runner (underutilized)"
+    ]
+  },
+  "merge_policy": {
+    "token_saver": "always — pure_pointer + MICROWAVE for large payloads",
+    "make_it_heavy": "when stakes high (legal audio, hashes, evidence) — exhaustive verification, no invented transcripts",
+    "delegation": "flippers first → explore/plan subagents → general-purpose; never LLM for batch hash/duration",
+    "stt": "blocked until whisper-cpp tiny/base or remote WhisperX; queue prioritized short+nonempty first; legal private",
+    "skills_dynamic": [
+      "token-saver",
+      "path-of-highest-power",
+      "toolbelt",
+      "voice-memo-processor",
+      "swarm-orchestrator",
+      "mimo_skills/test-runner",
+      "mimo-code:make-it-heavy (ptr)",
+      "mimo-code:helix-pro-code (ptr)",
+      "remove-wall-of-text"
+    ]
+  },
+  "upgrades_applied": [
+    "voice-memo-stage-a-flipper in doctor FLIPPERS",
+    "voice-memo-stage-c-queue-flipper",
+    "make-heavy-microwave-flipper",
+    "token connector routes: voice, stage_c, make_heavy",
+    "token-100pct targets include voice STATUS/summary",
+    "mimo_skills router expanded",
+    "capability matrix externalized (this file)"
+  ]
+}

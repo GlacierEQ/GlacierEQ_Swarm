@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.DS_Store
+*.m4a
+state/voice_memos/
+state/externalized_blobs/
+state/*_last.json
+job-app/repos/
+**/*1FDV*
+**/AEON*
+**/legal*
+.env
+*.pem
