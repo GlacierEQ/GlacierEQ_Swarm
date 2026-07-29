@@ -1,42 +1,46 @@
-# GlacierEQ_Swarm
+# GlacierEQ Swarm — Master Swarm Orchestrator 🐝
 
-Private Swarm OS for GlacierEQ operator machine.
+> **Central multi-agent swarm orchestration and task routing framework for GlacierEQ.**
 
-## Contents
-
-- `automations/` — MICROWAVE flippers (token-100pct, voice Stage A/C queue, make-heavy, toolbelt-doctor, …)
-- `skills/` — mirrored skill routers (mimo_skills, token_saver_connector)
-- `state/capability_merge.json` — Grok vs MiMo capability matrix (no evidence)
-- `toolbelt/` — activation map when present
-
-## Privacy
-
-- **No** voice memo audio, intake hashes of legal audio, or AEON case packs in this repo.
-- Local full state remains at `~/GlacierEQ_Swarm/state/` (gitignored on workstation).
-
-## Quick run
-
-```bash
-python3 automations/toolbelt-doctor.py
-python3 automations/token-100pct-savings-flipper.py
-python3 automations/make-heavy-microwave-flipper.py
-python3 automations/voice-memo-stage-c-queue-flipper.py
-```
-
-## Host notes
-
-8GB / i5 device: STT blocked until whisper-cpp tiny or remote WhisperX.
+[![Python](https://img.shields.io/badge/Python-3.9+-blue)]()
+[![Domain](https://img.shields.io/badge/Domain-Swarm%20Orchestration-purple)]()
 
 ---
 
-## Fleet ops (transparent)
+## 🎯 For Recruiters & Hiring Managers
 
-This repo may include **`.integrity/`** (SHA-256 baselines / watchdog) and/or a health sidecar.
-These are **documented multi-repo fleet operations**, not covert implants.
+This repository implements **GlacierEQ Swarm** — the central multi-agent swarm orchestrator that manages agent discovery, task distribution, and load balancing across all portfolio components. It demonstrates:
 
-See [SECURITY_AND_FLEET_OPS.md](SECURITY_AND_FLEET_OPS.md) and
-`~/GlacierEQ_Swarm/state/PORTFOLIO_SHADOW_AND_GAUNTLET.md`.
+- **Swarm topology management** tracking active worker nodes and capabilities
+- **Dynamic task distribution** routing incoming user goals to optimal subagents
+- **Fault-tolerant swarm recovery** automatically re-assigning failed agent tasks
+- **Unified telemetry stream** aggregating agent logs and completion events
 
-## Helix strand
+**Why this matters**: Large-scale agentic engineering requires centralized swarm orchestration to coordinate specialized subagents towards complex multi-phase goals.
 
-See [HELIX_STRAND.md](HELIX_STRAND.md) — piston/spiral role in the portfolio double helix.
+---
+
+## 🔬 For Engineers & Technical Reviewers
+
+### Core Components
+
+| Component | Language | Purpose |
+|---|---|---|
+| `swarm_master.py` | Python | Master swarm orchestrator, worker pool, task distributor |
+| `tests/` | Python | Swarm routing and failure recovery test suite |
+
+---
+
+## 🤖 ML/AI & Programmatic Mesh Integration
+
+- **MCP Tool**: `swarm_status()` — global swarm capacity and worker health status
+- **Mastermind Sidecar**: Primary control node for APEX Highway mesh
+- **SHA-256 Integrity**: Tracked in `.integrity/file_hashes.json`
+
+---
+
+## ⚡ Quick Start
+
+```bash
+python3 swarm_master.py
+```
