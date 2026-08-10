@@ -1,39 +1,82 @@
 {
-  "schema": "glaciereq.repo-excellence.record.v1",
-  "identity": {
-    "repository": "GlacierEQ/GlacierEQ_Swarm",
-    "repository_id": "GlacierEQ_Swarm",
-    "canonical_head": "RESOLVED",
-    "default_branch": "main",
-    "lineage_action": "migrated"
-  },
-  "state": "PROMOTED",
-  "canonical_role": "SPECIALIST_COMPONENT",
-  "scores": {
-    "target_architecture": 5.0,
-    "current_proof": "C",
-    "company_fit": 0.0,
-    "canonical_confidence": 0.0
-  },
+  "schema": "glaciereq.repo-excellence-state.v1",
+  "repository": "GlacierEQ/GlacierEQ_Swarm",
+  "principal_state": "DISCOVERED",
   "gates": {
-    "problem_verified": true,
-    "unique_value_known": true,
-    "canonical_identity_known": true,
-    "central_mechanism_implemented": true,
-    "deterministic_tests_pass": true,
-    "adversarial_tests_pass": true,
-    "runtime_behavior_observed": true,
-    "security_authority_bounded": true,
-    "proof_receipt_bound_to_sha": true,
-    "reusable_capabilities_extracted": true,
-    "projections_truth_consistent": true,
-    "evolution_cursor_defined": true
+    "IDENTITY_RESOLVED": {
+      "status": "PENDING"
+    },
+    "PROBLEM_VERIFIED": {
+      "status": "PENDING"
+    },
+    "TARGET_CONTRACT_FROZEN": {
+      "status": "PENDING"
+    },
+    "DONOR_PLAN_RESOLVED": {
+      "status": "PENDING"
+    },
+    "VERTICAL_SLICE_ALIVE": {
+      "status": "PENDING"
+    },
+    "CENTRAL_MECHANISM_PRESENT": {
+      "status": "PENDING"
+    },
+    "DETERMINISTIC_PROOF_GREEN": {
+      "status": "PENDING"
+    },
+    "ADVERSARIAL_SURVIVAL": {
+      "status": "PENDING"
+    },
+    "OPERABLE_AND_OBSERVABLE": {
+      "status": "PENDING"
+    },
+    "PROOF_RECEIPT_BOUND": {
+      "status": "PENDING"
+    },
+    "AUTHORITY_BOUND": {
+      "status": "PENDING"
+    },
+    "CANONICAL_POSITION_RESOLVED": {
+      "status": "PENDING"
+    },
+    "EVOLUTION_CURSOR_DEFINED": {
+      "status": "PASS",
+      "at": "2026-08-10T05:56Z",
+      "evidence": "schema migrate; principal not PROMOTED"
+    }
   },
-  "evolution": {
-    "next_gate": "next:resolve_operate_theater"
+  "history": [
+    {
+      "at": "2026-08-10T05:56Z",
+      "from": "DISCOVERED",
+      "to": "DISCOVERED",
+      "gate": "EVOLUTION_CURSOR_DEFINED",
+      "result": "PASS",
+      "note": "honest gap/demotion; not PROMOTED (gap=True)"
+    }
+  ],
+  "contract_ref": "machine/target-contract.json",
+  "scores_ref": "machine/excellence-scores.json",
+  "evolution_cursor": "next:canonical_position_only_if_estate_role_resolved",
+  "wave": {
+    "id": "ELITE-ESTATE-SCHEMA-MIGRATE-2026-08-10",
+    "proof_ok": false,
+    "operable_ok": false,
+    "migrated_at": "2026-08-10T05:56Z",
+    "from_schema": "glaciereq.repo-excellence.record.v1"
   },
+  "demotion": {
+    "at": "2026-08-10T05:56Z",
+    "from_claim": "PROMOTED",
+    "to": "DISCOVERED",
+    "reason": "schema migrate: PROMOTED XOR gap-receipt",
+    "blocker": "OPERATE_THEATER",
+    "rule": "PROMOTED XOR gap-receipt"
+  },
+  "gap_receipt_ref": "machine/gap-receipt.json",
   "proof_receipt": {
     "source_sha": "HYPER_VALIDATED_SHA256",
     "identity": "HYPER_VALIDATED_IDENTITY"
-  }
+  },
+  "state": "DISCOVERED"
 }
