@@ -1,85 +1,39 @@
 {
-  "schema": "glaciereq.repo-excellence-state.v1",
-  "repository": "GlacierEQ/GlacierEQ_Swarm",
-  "principal_state": "DISCOVERED",
+  "schema": "glaciereq.repo-excellence.record.v1",
+  "identity": {
+    "repository": "GlacierEQ/GlacierEQ_Swarm",
+    "repository_id": "GlacierEQ_Swarm",
+    "canonical_head": "RESOLVED",
+    "default_branch": "main",
+    "lineage_action": "migrated"
+  },
+  "state": "DISCOVERED",
+  "canonical_role": "SPECIALIST_COMPONENT",
+  "scores": {
+    "target_architecture": 5.0,
+    "current_proof": "C",
+    "company_fit": 0.0,
+    "canonical_confidence": 0.0
+  },
   "gates": {
-    "IDENTITY_RESOLVED": {
-      "status": "PASS",
-      "at": "2026-08-10T04:33Z",
-      "evidence": "leaf path exists"
-    },
-    "PROBLEM_VERIFIED": {
-      "status": "PENDING"
-    },
-    "TARGET_CONTRACT_FROZEN": {
-      "status": "PENDING"
-    },
-    "DONOR_PLAN_RESOLVED": {
-      "status": "PENDING"
-    },
-    "VERTICAL_SLICE_ALIVE": {
-      "status": "FAIL",
-      "at": "2026-08-10T04:33Z",
-      "evidence": "gap:OPERATE_THEATER"
-    },
-    "CENTRAL_MECHANISM_PRESENT": {
-      "status": "PENDING",
-      "at": "2026-08-10T04:33Z",
-      "evidence": "OPERATE_THEATER"
-    },
-    "DETERMINISTIC_PROOF_GREEN": {
-      "status": "FAIL",
-      "at": "2026-08-10T04:33Z",
-      "evidence": "OPERATE_THEATER"
-    },
-    "ADVERSARIAL_SURVIVAL": {
-      "status": "PENDING"
-    },
-    "OPERABLE_AND_OBSERVABLE": {
-      "status": "FAIL",
-      "at": "2026-08-10T04:33Z",
-      "evidence": "OPERATE_THEATER"
-    },
-    "PROOF_RECEIPT_BOUND": {
-      "status": "PENDING"
-    },
-    "AUTHORITY_BOUND": {
-      "status": "PENDING"
-    },
-    "CANONICAL_POSITION_RESOLVED": {
-      "status": "PENDING"
-    },
-    "EVOLUTION_CURSOR_DEFINED": {
-      "status": "PASS",
-      "at": "2026-08-10T04:33Z",
-      "evidence": "gap residual"
-    }
+    "problem_verified": false,
+    "unique_value_known": false,
+    "canonical_identity_known": true,
+    "central_mechanism_implemented": false,
+    "deterministic_tests_pass": false,
+    "adversarial_tests_pass": false,
+    "runtime_behavior_observed": false,
+    "security_authority_bounded": false,
+    "proof_receipt_bound_to_sha": false,
+    "reusable_capabilities_extracted": false,
+    "projections_truth_consistent": true,
+    "evolution_cursor_defined": true
   },
-  "history": [
-    {
-      "at": "2026-08-10T04:33Z",
-      "from": "DISCOVERED",
-      "to": "DISCOVERED",
-      "gate": "EVOLUTION_CURSOR_DEFINED",
-      "result": "PASS",
-      "note": "honest GAP residual; blocker=OPERATE_THEATER; not PROMOTED"
-    }
-  ],
-  "gap_receipt_ref": "machine/gap-receipt.json",
-  "demotion": {
-    "at": "2026-08-10T04:33Z",
-    "from_claim": "PROMOTED",
-    "to": "DISCOVERED",
-    "reason": "pr_ok=True ran=7 op_ok=False primary_ok=False",
-    "blocker": "OPERATE_THEATER",
-    "rule": "PROMOTED XOR gap-receipt"
+  "evolution": {
+    "next_gate": "next:resolve_operate_theater"
   },
-  "contract_ref": "machine/target-contract.json",
-  "scores_ref": null,
-  "evolution_cursor": "next:resolve_operate_theater",
-  "wave": {
-    "id": "ELITE-GAP-HONESTY-2026-08-10",
-    "promoted_at": null,
-    "gap": true
+  "proof_receipt": {
+    "source_sha": "migrated_sha_placeholder",
+    "identity": "migrated_identity_placeholder"
   }
 }
