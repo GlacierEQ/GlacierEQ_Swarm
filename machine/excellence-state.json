@@ -41,20 +41,11 @@
     },
     "EVOLUTION_CURSOR_DEFINED": {
       "status": "PASS",
-      "at": "2026-08-10T05:56Z",
-      "evidence": "schema migrate; principal not PROMOTED"
+      "at": "2026-08-10T06:12Z",
+      "evidence": "honest non-PROMOTED; cursor defined"
     }
   },
-  "history": [
-    {
-      "at": "2026-08-10T05:56Z",
-      "from": "DISCOVERED",
-      "to": "DISCOVERED",
-      "gate": "EVOLUTION_CURSOR_DEFINED",
-      "result": "PASS",
-      "note": "honest gap/demotion; not PROMOTED (gap=True)"
-    }
-  ],
+  "history": [],
   "contract_ref": "machine/target-contract.json",
   "scores_ref": "machine/excellence-scores.json",
   "evolution_cursor": "next:canonical_position_only_if_estate_role_resolved",
@@ -63,8 +54,11 @@
     "proof_ok": false,
     "operable_ok": false,
     "migrated_at": "2026-08-10T05:56Z",
-    "from_schema": "glaciereq.repo-excellence.record.v1"
+    "from_schema": "glaciereq.repo-excellence.record.v1",
+    "history_repaired_at": "2026-08-10T06:12Z"
   },
+  "state": "DISCOVERED",
+  "gap_receipt_ref": "machine/gap-receipt.json",
   "demotion": {
     "at": "2026-08-10T05:56Z",
     "from_claim": "PROMOTED",
@@ -72,11 +66,5 @@
     "reason": "schema migrate: PROMOTED XOR gap-receipt",
     "blocker": "OPERATE_THEATER",
     "rule": "PROMOTED XOR gap-receipt"
-  },
-  "gap_receipt_ref": "machine/gap-receipt.json",
-  "proof_receipt": {
-    "source_sha": "HYPER_VALIDATED_SHA256",
-    "identity": "HYPER_VALIDATED_IDENTITY"
-  },
-  "state": "DISCOVERED"
+  }
 }
