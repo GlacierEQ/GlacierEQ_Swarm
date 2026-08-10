@@ -1,0 +1,7 @@
+{
+  "schema": "glaciereq.promotion-authority-absent.v1",
+  "repository": "GlacierEQ/GlacierEQ_Swarm",
+  "at": "2026-08-10T04:33Z",
+  "present": false,
+  "reason": "GAP leaf \u2014 no HMAC grant while gap-receipt active"
+}

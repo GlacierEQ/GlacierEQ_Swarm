@@ -1,0 +1,9 @@
+{
+  "schema": "glaciereq.elite-leaf-gap.v1",
+  "repository": "GlacierEQ/GlacierEQ_Swarm",
+  "at": "2026-08-10T04:33Z",
+  "blocker": "OPERATE_THEATER",
+  "evidence": "leaves/GlacierEQ_Swarm/proof.log+launch.log",
+  "not_promoted_reason": "pr_ok=True ran=7 op_ok=False primary_ok=False",
+  "principal_state_claim": null
+}

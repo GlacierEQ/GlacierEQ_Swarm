@@ -1,0 +1,85 @@
+{
+  "schema": "glaciereq.repo-excellence-state.v1",
+  "repository": "GlacierEQ/GlacierEQ_Swarm",
+  "principal_state": "DISCOVERED",
+  "gates": {
+    "IDENTITY_RESOLVED": {
+      "status": "PASS",
+      "at": "2026-08-10T04:33Z",
+      "evidence": "leaf path exists"
+    },
+    "PROBLEM_VERIFIED": {
+      "status": "PENDING"
+    },
+    "TARGET_CONTRACT_FROZEN": {
+      "status": "PENDING"
+    },
+    "DONOR_PLAN_RESOLVED": {
+      "status": "PENDING"
+    },
+    "VERTICAL_SLICE_ALIVE": {
+      "status": "FAIL",
+      "at": "2026-08-10T04:33Z",
+      "evidence": "gap:OPERATE_THEATER"
+    },
+    "CENTRAL_MECHANISM_PRESENT": {
+      "status": "PENDING",
+      "at": "2026-08-10T04:33Z",
+      "evidence": "OPERATE_THEATER"
+    },
+    "DETERMINISTIC_PROOF_GREEN": {
+      "status": "FAIL",
+      "at": "2026-08-10T04:33Z",
+      "evidence": "OPERATE_THEATER"
+    },
+    "ADVERSARIAL_SURVIVAL": {
+      "status": "PENDING"
+    },
+    "OPERABLE_AND_OBSERVABLE": {
+      "status": "FAIL",
+      "at": "2026-08-10T04:33Z",
+      "evidence": "OPERATE_THEATER"
+    },
+    "PROOF_RECEIPT_BOUND": {
+      "status": "PENDING"
+    },
+    "AUTHORITY_BOUND": {
+      "status": "PENDING"
+    },
+    "CANONICAL_POSITION_RESOLVED": {
+      "status": "PENDING"
+    },
+    "EVOLUTION_CURSOR_DEFINED": {
+      "status": "PASS",
+      "at": "2026-08-10T04:33Z",
+      "evidence": "gap residual"
+    }
+  },
+  "history": [
+    {
+      "at": "2026-08-10T04:33Z",
+      "from": "DISCOVERED",
+      "to": "DISCOVERED",
+      "gate": "EVOLUTION_CURSOR_DEFINED",
+      "result": "PASS",
+      "note": "honest GAP residual; blocker=OPERATE_THEATER; not PROMOTED"
+    }
+  ],
+  "gap_receipt_ref": "machine/gap-receipt.json",
+  "demotion": {
+    "at": "2026-08-10T04:33Z",
+    "from_claim": "PROMOTED",
+    "to": "DISCOVERED",
+    "reason": "pr_ok=True ran=7 op_ok=False primary_ok=False",
+    "blocker": "OPERATE_THEATER",
+    "rule": "PROMOTED XOR gap-receipt"
+  },
+  "contract_ref": "machine/target-contract.json",
+  "scores_ref": null,
+  "evolution_cursor": "next:resolve_operate_theater",
+  "wave": {
+    "id": "ELITE-GAP-HONESTY-2026-08-10",
+    "promoted_at": null,
+    "gap": true
+  }
+}
