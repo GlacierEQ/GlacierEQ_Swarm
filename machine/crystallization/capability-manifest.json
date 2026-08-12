@@ -1,0 +1,165 @@
+{
+  "schema": "glaciereq.crystallization-capabilities.v1",
+  "capabilities": [
+    {
+      "id": "worker_registry",
+      "class": "agents",
+      "description": "Register workers with explicit capability sets, concurrency limits, health state, metadata, and lifecycle transitions.",
+      "material": true,
+      "state": "WORKING",
+      "implementation_paths": ["src/mechanism.py"],
+      "verification": ["tests/test_swarm.py::TestGlacierEQSwarm::test_routes_by_capability_and_capacity", "tests/test_swarm.py::TestGlacierEQSwarm::test_heartbeat_must_be_monotonic_and_can_recover_worker_health"],
+      "consumer": "swarm scheduler"
+    },
+    {
+      "id": "capability_priority_scheduler",
+      "class": "schedulers",
+      "description": "Route queued work by required capability, priority, available capacity, load, failure history, and deterministic tie-breaks.",
+      "material": true,
+      "state": "WORKING",
+      "implementation_paths": ["src/mechanism.py"],
+      "verification": ["tests/test_swarm.py::TestGlacierEQSwarm::test_priority_dispatches_highest_value_first", "tests/test_swarm.py::TestGlacierEQSwarm::test_load_balances_equal_workers_deterministically"],
+      "consumer": "execution control plane"
+    },
+    {
+      "id": "failure_recovery_state_machine",
+      "class": "operational_recovery",
+      "description": "Track task lifecycle, retry budgets, failed workers, requeue work after worker failure, and dead-letter terminal failures.",
+      "material": true,
+      "state": "WORKING",
+      "implementation_paths": ["src/mechanism.py"],
+      "verification": ["tests/test_swarm.py::TestGlacierEQSwarm::test_failed_task_requeues_to_alternate_worker", "tests/test_swarm.py::TestGlacierEQSwarm::test_retry_budget_eventually_dead_letters_task", "tests/test_swarm.py::TestGlacierEQSwarm::test_unhealthy_worker_requeues_active_work"],
+      "consumer": "swarm scheduler"
+    },
+    {
+      "id": "integrity_chained_telemetry",
+      "class": "observability",
+      "description": "Record every orchestration transition in an integrity-chained event stream and verify the chain deterministically.",
+      "material": true,
+      "state": "WORKING",
+      "implementation_paths": ["src/mechanism.py"],
+      "verification": ["tests/test_swarm.py::TestGlacierEQSwarm::test_telemetry_chain_proves_lifecycle"],
+      "consumer": "operator and proof system"
+    },
+    {
+      "id": "swarm_snapshot_recovery",
+      "class": "operational_recovery",
+      "description": "Serialize content-addressed in-memory swarm state and restore it with telemetry and assignment cross-reference validation.",
+      "material": true,
+      "state": "WORKING",
+      "implementation_paths": ["src/mechanism.py"],
+      "verification": ["tests/test_swarm.py::TestGlacierEQSwarm::test_snapshot_round_trip_preserves_assignments_and_integrity", "tests/test_swarm.py::TestGlacierEQSwarm::test_snapshot_tamper_is_refused"],
+      "consumer": "orchestrator runtime"
+    },
+    {
+      "id": "real_worker_execution_adapter",
+      "class": "execution_engine",
+      "description": "Invoke actual registered workers through bounded adapters, stream lifecycle/result evidence back into the scheduler, and enforce timeout/cancellation/authority boundaries instead of only modeling assignments.",
+      "material": true,
+      "state": "MISSING",
+      "implementation_paths": [],
+      "verification": [],
+      "consumer": "task execution path"
+    },
+    {
+      "id": "durable_swarm_state",
+      "class": "storage",
+      "description": "Persist workers, queued/active/dead tasks, telemetry, retry state, and snapshots across process restarts with transaction/integrity semantics.",
+      "material": true,
+      "state": "MISSING",
+      "implementation_paths": [],
+      "verification": [],
+      "consumer": "always-addressable swarm service"
+    },
+    {
+      "id": "service_api_and_mcp_interface",
+      "class": "APIs",
+      "description": "Expose registration, task submission, status, telemetry, cancellation, and crystallization dispatch through a real authenticated service/API or MCP boundary.",
+      "material": true,
+      "state": "MISSING",
+      "implementation_paths": ["mastermind_sidecar.py"],
+      "verification": [],
+      "consumer": "agent clients and external control planes"
+    },
+    {
+      "id": "health_readiness_and_runtime_lifecycle",
+      "class": "observability",
+      "description": "Expose meaningful health/readiness tied to scheduler persistence and execution dependencies, not a process uptime string.",
+      "material": true,
+      "state": "PARTIAL",
+      "implementation_paths": ["mastermind_sidecar.py", "src/mechanism.py"],
+      "verification": ["tests/test_swarm.py::TestGlacierEQSwarm::test_cold_start_demo_executes_real_swarm_lifecycle"],
+      "consumer": "deployment platform and operator"
+    },
+    {
+      "id": "crystallization_mandate_contract",
+      "class": "control_plane",
+      "description": "Encode the estate-wide purpose-first completion law, anti-shortcut rules, status model, deployment requirements, and estate exit condition as machine-readable authority.",
+      "material": true,
+      "state": "WORKING",
+      "implementation_paths": ["governance/CRYSTALLIZATION_MANDATE.yaml", "automations/crystallization_executor.py"],
+      "verification": ["automations/tests/test_crystallization_executor.py", ".github/verification/crystallization.sh"],
+      "consumer": "estate executor"
+    },
+    {
+      "id": "estate_repository_inventory",
+      "class": "data_processing",
+      "description": "Enumerate every accessible repository, including ownership, archived/fork state, visibility, default branch, and parent metadata, without representative sampling.",
+      "material": true,
+      "state": "WORKING",
+      "implementation_paths": ["automations/crystallization_executor.py"],
+      "verification": ["automations/tests/test_crystallization_executor.py"],
+      "consumer": "estate crystallization executor"
+    },
+    {
+      "id": "purpose_capability_gap_reconstruction",
+      "class": "agents",
+      "description": "Drive repository workers to recover intention from total evidence and emit purpose, capability, and gap manifests before implementation.",
+      "material": true,
+      "state": "PARTIAL",
+      "implementation_paths": ["automations/crystallization_executor.py"],
+      "verification": ["automations/tests/test_crystallization_executor.py"],
+      "consumer": "repository crystallization workers"
+    },
+    {
+      "id": "parallel_repository_crystallization",
+      "class": "orchestration",
+      "description": "Execute isolated repository work units in parallel, implement missing capabilities, run proof, push branches/PRs, and record truthful unresolved status.",
+      "material": true,
+      "state": "PARTIAL",
+      "implementation_paths": ["automations/crystallization_executor.py", "automations/estate_function_restorer.py"],
+      "verification": ["automations/tests/test_crystallization_executor.py", "automations/tests/test_estate_function_restorer.py"],
+      "consumer": "entire GitHub estate"
+    },
+    {
+      "id": "estate_completion_ledger",
+      "class": "analytics",
+      "description": "Persist authoritative counts and unresolved failures across every in-scope repository until UNKNOWN/BROKEN/INCOMPLETE reach zero.",
+      "material": true,
+      "state": "PARTIAL",
+      "implementation_paths": ["automations/crystallization_executor.py"],
+      "verification": ["automations/tests/test_crystallization_executor.py"],
+      "consumer": "human operator and estate control plane"
+    },
+    {
+      "id": "dependency_and_shared_capability_graph",
+      "class": "analytics",
+      "description": "Build cross-repository dependency/lineage/shared-capability graphs so execution order, extraction, integration, and successor resolution are based on the estate as a system.",
+      "material": true,
+      "state": "MISSING",
+      "implementation_paths": [],
+      "verification": [],
+      "consumer": "estate scheduler"
+    },
+    {
+      "id": "production_deployment",
+      "class": "deployment",
+      "description": "Deploy the naturally service-shaped swarm control plane as an always-addressable runtime with environment/secrets contract, health/readiness, logs, release workflow, and operational rollback.",
+      "material": true,
+      "state": "MISSING",
+      "implementation_paths": [],
+      "verification": [],
+      "consumer": "agents and operator"
+    }
+  ]
+}
