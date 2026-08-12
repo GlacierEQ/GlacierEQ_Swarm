@@ -13,14 +13,18 @@ jobs:
       repo_name: ${{ github.event.repository.name }}
       language: python
 
-  estate-function-restorer-contract:
+  crystallization-contract:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Compile restorer
-        run: python -m py_compile automations/estate_function_restorer.py
-      - name: Run fail-closed restorer tests
+      - name: Compile crystallization machinery
+        run: |
+          python -m py_compile automations/estate_function_restorer.py
+          python -m py_compile automations/crystallization_executor.py
+      - name: Prove crystallization terminal-status law
+        run: python -m unittest automations/tests/test_crystallization_executor.py -v
+      - name: Preserve legacy plumbing tests
         run: python -m unittest automations/tests/test_estate_function_restorer.py -v
