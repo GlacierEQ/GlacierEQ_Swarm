@@ -1,0 +1,315 @@
+contract:
+  id: CRYSTALLIZATION-MANDATE
+  version: "1.0"
+  class: ESTATE_WIDE_METAMORPHOSIS
+  authority: MAXIMUM_FUNCTIONAL_COMPLETION
+  execution_mode: REPAIR_FORWARD_AND_EVOLVE
+  scope: EVERY_ACCESSIBLE_REPOSITORY
+  objective: >-
+    Transform the entire GitHub estate into a coherent collection of COMPLETE,
+    FUNCTIONAL, DEPLOYABLE, PURPOSE-FULFILLING SOFTWARE SYSTEMS. This is not
+    cleanup, normalization, gate repair, or repository beautification. Every
+    repository must be understood from first principles, completed according
+    to its full intended purpose, strengthened where weak, tested against real
+    behavior, integrated where appropriate, and deployed wherever deployment
+    is part of its natural existence.
+  controlling_principle: >-
+    EVERY REPOSITORY MUST BECOME THE FULL REALIZATION OF ITS PURPOSE.
+    Completion is measured by accomplished purpose, not file count,
+    documentation, CI status, lint status, governance compliance,
+    architectural elegance, or historical fidelity.
+  estate_rule: >-
+    NO REPOSITORY IS EXEMPT MERELY BECAUSE THE ESTATE IS LARGE. Scale changes
+    execution strategy. Scale does not change the completion standard.
+
+metamorphosis_standard:
+  every_repository_must_answer:
+    - What is this?
+    - Why does it exist?
+    - What problem is it supposed to solve?
+    - What outcome should exist when it works?
+    - Who or what consumes that outcome?
+    - What are all intended capabilities?
+    - Which capabilities currently exist?
+    - Which capabilities are incomplete?
+    - Which capabilities were buried or broken?
+    - Which capabilities are implied by the repository purpose?
+    - What must be built for complete purpose fulfillment?
+    - How should it run?
+    - How should it be tested?
+    - How should it be deployed?
+    - How should another system or human consume it?
+    - What evidence proves that it works?
+  repository_target_state:
+    identity: CRYSTALLIZED
+    requirements:
+      - purpose_is_explicit
+      - intended_outcomes_are_explicit
+      - architecture_supports_purpose
+      - central_mechanism_exists
+      - all_material_functions_exist
+      - primary_execution_path_works
+      - secondary_execution_paths_work_where_required
+      - errors_are_handled
+      - external_integrations_are_real
+      - persistence_is_real_where_required
+      - interfaces_are_real
+      - tests_cover_behavior
+      - build_is_reproducible
+      - runtime_is_reproducible
+      - deployment_exists_where_applicable
+      - observability_exists_where_applicable
+      - documentation_matches_reality
+      - examples_execute
+      - outputs_are_demonstrable
+      - no_fake_completion
+      - no_dead_architecture
+      - no_gate_without_operational_reason
+
+completion_law: >-
+  A repository is not complete because it builds, tests pass, CI is green,
+  documentation exists, or architecture is beautiful. A repository is
+  complete only when its intended purpose can actually be achieved through the
+  software.
+
+intention_recovery:
+  sources:
+    - source_code
+    - repository_history
+    - README_and_docs
+    - issues
+    - pull_requests
+    - branch_lineage
+    - package_metadata
+    - tests
+    - API_shapes
+    - schemas
+    - deployments
+    - environment_configuration
+    - comments
+    - neighboring_repositories
+    - successor_and_predecessor_repositories
+    - generated_artifacts
+    - user_project_context
+  rule: >-
+    INTENTION MUST BE RECONSTRUCTED FROM THE TOTAL EVIDENCE OF THE REPOSITORY.
+    Do not reduce a repository to whatever happens to compile today.
+
+capability_completion:
+  requirement: EXHAUSTIVE_WITHIN_PURPOSE
+  rule: >-
+    Identify the complete capability set implied by purpose and implement it.
+    Do not stop after one repaired function, a historical minimal
+    implementation, or because historical code never reached completion.
+  capability_classes:
+    - core_domain_logic
+    - execution_engine
+    - APIs
+    - CLIs
+    - user_interfaces
+    - agents
+    - workers
+    - schedulers
+    - event_processing
+    - storage
+    - retrieval
+    - search
+    - authentication
+    - authorization
+    - integrations
+    - data_processing
+    - analytics
+    - observability
+    - deployment
+    - testing
+    - packaging
+    - developer_experience
+    - operational_recovery
+
+architecture_rule: >-
+  ARCHITECTURE EXISTS TO ENABLE FUNCTION. Preserve strong mechanisms. Repair
+  weak mechanisms. Replace useless abstraction. Collapse accidental
+  complexity. Split or combine systems only where purpose materially benefits.
+  Never refactor merely to demonstrate architectural activity.
+
+language_strategy:
+  mode: PURPOSE_OPTIMIZED_POLYGLOT
+  principle: USE THE BEST LANGUAGE FOR EACH TECHNICAL RESPONSIBILITY.
+  preferred_roles:
+    TypeScript: [control_planes, web_applications, APIs, orchestration, developer_tooling, MCP, agent_interfaces, event_driven_services]
+    Python: [machine_learning, data_science, document_intelligence, NLP, ETL, research_computation, automation, model_evaluation]
+    Rust: [high_integrity_execution, hashing, parsers, high_performance_services, concurrency, security_sensitive_core_logic, portable_binaries, deterministic_workers]
+    Go: [infrastructure_services, network_daemons, deployment_agents, lightweight_concurrent_services, operational_CLIs]
+    SQL: [canonical_data_models, relational_integrity, analytics, database_functions, materialized_knowledge, authorization_boundaries]
+    Bash: [bootstrap, environment_orchestration, deployment_glue, reproducible_system_operations]
+  prohibition: DO_NOT_REWRITE_WORKING_SOFTWARE_MERELY_TO_ADD_LANGUAGE_DIVERSITY
+
+functional_first_rule:
+  priority_order: [purpose, capability, execution, correctness, reliability, integration, deployment, observability, maintainability, governance, aesthetics]
+  implication: >-
+    Governance that prevents purpose fulfillment must change. A beautiful
+    abstraction with no operational value cannot outrank working functionality.
+
+gate_policy:
+  default: SUSPICIOUS_UNTIL_JUSTIFIED
+  valid_gate_requires: [identified_risk, identified_invariant, demonstrable_protection, low_operational_friction]
+  invalid_gate_actions: [remove, simplify, consolidate, replace_with_test, replace_with_runtime_assertion, replace_with_observability]
+  absolute_rule: GATES_MUST_PROTECT_FUNCTION__FUNCTION_MUST_NEVER_EXIST_MERELY_TO_SATISFY_GATES
+
+deployment_mandate:
+  principle: IF_A_REPOSITORY_NATURALLY_REPRESENTS_A_DEPLOYABLE_SYSTEM__DEPLOYMENT_IS_PART_OF_COMPLETION
+  targets_may_include: [Vercel, Supabase, Google_Cloud, containers, serverless, GitHub_Actions, package_registries, binaries, workers, edge_functions, scheduled_services, local_first_runtime]
+  require_where_applicable: [build_configuration, environment_contract, secrets_interface, health_check, readiness_check, deployment_workflow, rollback_capability_for_future_failures, runtime_logs, reproducible_release_process]
+  clarification: >-
+    NO ROLLBACK applies to metamorphosis strategy. Future production
+    deployments retain normal rollback capability as operational safety.
+
+quality_standard:
+  level: PRODUCTION_GRADE
+  prohibit: [placeholder, TODO_as_implementation, mock_as_final_product, empty_function, fake_integration, fake_API, dead_route, undocumented_required_secret, hardcoded_local_only_path, unhandled_core_failure, test_that_does_not_test_behavior, example_that_does_not_execute, README_claim_not_supported_by_runtime]
+
+testing:
+  principle: TEST_PURPOSE_NOT_MERELY_IMPLEMENTATION_SHAPE
+  hierarchy: [unit, integration, contract, end_to_end, deployment_smoke, failure_recovery, adversarial, performance_where_material]
+  completion_requires: [happy_path_proven, material_failure_paths_proven, important_integrations_proven, deployment_smoke_proven_where_applicable]
+
+estate_orchestration:
+  phase_0_inventory:
+    actions: [enumerate_every_repository, collect_metadata, detect_archived_and_forked_repositories, detect_successor_lineages, detect_duplicate_families, detect_shared_components, detect_deployment_targets, detect_language_and_framework]
+    output: canonical_estate_registry
+  phase_1_semantic_reconstruction:
+    actions: [determine_repository_purpose, recover_intended_capabilities, determine_lineage, identify_related_repositories, identify_missing_execution]
+    output: [purpose_manifest_per_repository, capability_manifest_per_repository]
+  phase_2_function_gap_analysis:
+    classify_each_capability: [WORKING, PARTIAL, BROKEN, MISSING, OBSOLETE, UNKNOWN]
+    output: function_gap_matrix
+  phase_3_crystallization:
+    actions: [implement_missing_functions, repair_broken_functions, connect_partial_functions, restore_external_integrations, remove_functionless_obstruction, harden_interfaces, finish_user_facing_paths, finish_machine_facing_paths]
+  phase_4_proof:
+    actions: [build, test, run, exercise_real_paths, inspect_outputs, test_failure_behavior]
+  phase_5_deployment:
+    actions: [provision_runtime, configure_environment, deploy, smoke_test, record_endpoint_or_artifact]
+  phase_6_cross_estate_crystallization:
+    actions: [identify_shared_capabilities, extract_reusable_components, connect_complementary_systems, remove_accidental_duplication, preserve_intentional_specialization, create_shared_runtime_foundations_where_useful]
+  phase_7_positioning:
+    actions: [make_each_repository_understandable, expose_demonstrable_value, document_real_capabilities, provide_runnable_examples, surface_architecture_only_after_function_is_real]
+
+repository_status_model:
+  UNKNOWN: not_yet_inspected
+  DISCOVERED: identity_known
+  UNDERSTOOD: purpose_and_capabilities_reconstructed
+  BROKEN: intended_behavior_does_not_work
+  INCOMPLETE: material_capabilities_missing
+  FUNCTIONAL: primary_purpose_operates
+  COMPLETE: intended_material_capabilities_operate
+  DEPLOYED: operational_runtime_or_release_exists
+  CRYSTALLIZED:
+    requires: [COMPLETE, tested, hardened, documented_truthfully, deployable_or_deployed_as_appropriate, purpose_demonstrated]
+
+acceptance_test:
+  repository_passes_only_if:
+    - purpose_is_known
+    - capabilities_are_enumerated
+    - material_capabilities_are_implemented
+    - primary_behavior_is_executed_successfully
+    - integration_paths_are_real
+    - tests_verify_behavior
+    - build_is_reproducible
+    - runtime_is_reproducible
+    - deployment_is_real_where_applicable
+    - documentation_matches_execution
+    - no_material_known_function_gap_remains
+
+estate_acceptance_test:
+  rule: THE_ESTATE_IS_NOT_COMPLETE_BECAUSE_THE_BEST_REPOSITORIES_ARE_COMPLETE
+  completion_requires:
+    every_in_scope_repository_one_of: [CRYSTALLIZED, intentionally_archived_with_verified_reason, canonicalized_into_verified_successor]
+    unresolved_repository_count: 0
+    unexplained_broken_repository_count: 0
+    unexplained_missing_function_count: 0
+
+anti_shortcut_rules:
+  forbidden:
+    - sample_five_repositories_and_generalize
+    - inspect_README_only
+    - inspect_root_files_only
+    - stop_after_CI_fix
+    - stop_after_build_fix
+    - stop_after_test_fix
+    - stop_after_dependency_update
+    - mass_generate_documentation_and_call_it_done
+    - add_governance_and_call_it_hardening
+    - archive_difficult_repositories_to_reduce_scope
+    - delete_duplicate_before_lineage_resolution
+    - rewrite_everything_into_one_language
+    - create_empty_shared_platforms
+    - declare_success_without_runtime_evidence
+
+concurrency:
+  principle: HUNDREDS_OF_REPOSITORIES_REQUIRE_PARALLEL_EXECUTION
+  execution_units: [repository_workers, lineage_workers, build_workers, test_workers, deployment_workers, dependency_workers, integration_workers, proof_workers]
+  coordination: [central_estate_registry, dependency_graph, shared_capability_graph, completion_ledger, failure_queue]
+
+cross_repository_intelligence:
+  rule: THE_ESTATE_MUST_IMPROVE_AS_A_SYSTEM_NOT_ONLY_AS_ISOLATED_REPOSITORIES
+  discover: [duplicated_mechanisms, complementary_services, reusable_libraries, common_data_models, common_agent_interfaces, shared_authentication, shared_observability, shared_deployment_components, reusable_document_intelligence, reusable_memory_systems, reusable_execution_kernels]
+
+preservation:
+  rules: [preserve_history, preserve_useful_existing_mechanisms, preserve_unique_features, preserve_provenance, preserve_data, preserve_intent_evidence, repair_forward]
+
+work_unit_contract:
+  each_repository_worker_must_return:
+    - repository
+    - canonical_identity
+    - purpose
+    - capability_inventory
+    - missing_capabilities
+    - broken_capabilities
+    - implemented_changes
+    - build_result
+    - test_result
+    - runtime_result
+    - deployment_result
+    - remaining_gap_count
+    - proof_artifacts
+    - crystallization_status
+
+completion_receipt:
+  repository_required: [repository_id, canonical_purpose, capability_count, implemented_capability_count, verified_capability_count, test_receipts, runtime_receipts, deployment_receipts, unresolved_gaps, final_status]
+  estate_required: [total_repositories, inspected_repositories, crystallized_repositories, canonicalized_successors, intentionally_archived, broken_remaining, incomplete_remaining, unknown_remaining, deployed_systems, verified_capabilities, unresolved_failures]
+
+hard_stop_rule: DO_NOT_CLAIM_COMPLETE_WHILE_ANY_IN_SCOPE_REPOSITORY_REMAINS_UNKNOWN_BROKEN_OR_MATERIALLY_INCOMPLETE
+
+final_law:
+  - EVERY_REPOSITORY_GETS_UNDERSTOOD
+  - EVERY_INTENTION_GETS_RECOVERED
+  - EVERY_MATERIAL_CAPABILITY_GETS_BUILT
+  - EVERY_BROKEN_EXECUTION_PATH_GETS_REPAIRED
+  - EVERY_REAL_SYSTEM_GETS_TESTED
+  - EVERY_NATURALLY_DEPLOYABLE_SYSTEM_GETS_DEPLOYED
+  - EVERY_CLAIM_GETS_PROVEN
+  - STRONG_CODE_IS_PRESERVED
+  - WEAK_CODE_IS_STRENGTHENED
+  - DEAD_ARCHITECTURE_IS_REMOVED_OR_REPLACED
+  - USEFUL_SYSTEMS_ARE_CONNECTED
+  - LANGUAGES_ARE_CHOSEN_FOR_TECHNICAL_ADVANTAGE
+  - NO_ROLLBACK_AS_THE_SOLUTION
+  - NO_GOVERNANCE_THEATER
+  - NO_PLACEHOLDERS
+  - NO_REPRESENTATIVE_SAMPLE
+  - NO_ABANDONED_LONG_TAIL
+  - NO_FALSE_COMPLETION
+  - THE_ENTIRE_CODEBASE_CRYSTALLIZES
+
+crystallization_test:
+  equation: INTENTION -> COMPLETE_CAPABILITY_MODEL -> REAL_IMPLEMENTATION -> INTEGRATED_EXECUTION -> TESTED_BEHAVIOR -> DEPLOYABLE_OR_DEPLOYED_SYSTEM -> DEMONSTRABLE_PURPOSE -> CRYSTALLIZED
+  rule: ANYTHING_THAT_STOPS_EARLIER_IS_UNFINISHED
+
+overriding_rule: DO_NOT_OPTIMIZE_THE_REPOSITORY_FOR_THE_REPOSITORY__OPTIMIZE_IT_FOR_THE_OUTCOME_IT_EXISTS_TO_PRODUCE
+
+estate_exit_condition:
+  UNKNOWN: 0
+  BROKEN: 0
+  INCOMPLETE: 0
+  exception: explicitly_resolved_successor_or_archive_cases
+  material_purpose_state: IMPLEMENTED_VERIFIED_OPERATIONAL
