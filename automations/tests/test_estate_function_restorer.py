@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 MODULE = Path(__file__).resolve().parents[1] / "estate_function_restorer.py"
 spec = importlib.util.spec_from_file_location("estate_function_restorer", MODULE)
 restorer = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = restorer
 assert spec.loader is not None
 spec.loader.exec_module(restorer)
 
