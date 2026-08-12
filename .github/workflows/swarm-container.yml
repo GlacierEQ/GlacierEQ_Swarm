@@ -1,0 +1,58 @@
+name: Swarm Container
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  container-runtime-smoke:
+    runs-on: ubuntu-latest
+    env:
+      GLACIEREQ_SWARM_TOKEN: ci-only-token-0123456789abcdef0123456789abcdef
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build service image
+        run: docker build -t glaciereq-swarm:ci .
+      - name: Create persistent state volume
+        run: docker volume create glaciereq-swarm-ci-state
+      - name: Start service and execute real task
+        run: |
+          docker run -d --name glaciereq-swarm-ci \
+            -p 18787:8787 \
+            -e GLACIEREQ_SWARM_TOKEN \
+            -v glaciereq-swarm-ci-state:/data \
+            glaciereq-swarm:ci
+          python scripts/smoke_swarm_service.py --base http://127.0.0.1:18787 --mode submit | tee /tmp/swarm-submit.json
+      - name: Restart service against same durable state
+        run: |
+          docker stop glaciereq-swarm-ci
+          docker rm glaciereq-swarm-ci
+          docker run -d --name glaciereq-swarm-ci \
+            -p 18787:8787 \
+            -e GLACIEREQ_SWARM_TOKEN \
+            -v glaciereq-swarm-ci-state:/data \
+            glaciereq-swarm:ci
+          python scripts/smoke_swarm_service.py --base http://127.0.0.1:18787 --mode verify-existing | tee /tmp/swarm-restart.json
+      - name: Assert smoke receipts
+        run: |
+          python - <<'PY'
+          import json
+          submit = json.load(open('/tmp/swarm-submit.json'))
+          restart = json.load(open('/tmp/swarm-restart.json'))
+          assert submit['status'] == 'PASS'
+          assert restart['status'] == 'PASS'
+          assert submit['task_id'] == restart['task_id']
+          assert submit['result_digest'] == restart['result_digest']
+          assert restart['store_revision'] >= submit['store_revision']
+          PY
+      - name: Show service logs
+        if: always()
+        run: docker logs glaciereq-swarm-ci || true
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f glaciereq-swarm-ci || true
+          docker volume rm glaciereq-swarm-ci-state || true

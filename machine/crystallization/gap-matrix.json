@@ -1,0 +1,50 @@
+{
+  "schema": "glaciereq.crystallization-gaps.v1",
+  "gaps": [
+    {
+      "capability_id": "real_worker_execution_adapter",
+      "state": "MISSING",
+      "required_work": "Implement bounded worker adapters that actually invoke registered local/remote executors, enforce timeouts/cancellation/authority, stream lifecycle events, bind exact input/output evidence, and feed success/failure into retry/reassignment semantics."
+    },
+    {
+      "capability_id": "durable_swarm_state",
+      "state": "MISSING",
+      "required_work": "Persist workers, tasks, assignments, retry/dead-letter state, telemetry chain, and snapshots transactionally across restart; prove crash/restart recovery and concurrent writers."
+    },
+    {
+      "capability_id": "service_api_and_mcp_interface",
+      "state": "MISSING",
+      "required_work": "Replace the uptime-only sidecar with a real machine service exposing worker registration/heartbeat, task submission/status/cancel, telemetry, swarm status, and crystallization dispatch with authentication/authority boundaries."
+    },
+    {
+      "capability_id": "health_readiness_and_runtime_lifecycle",
+      "state": "PARTIAL",
+      "required_work": "Tie health/readiness to durable store availability, scheduler integrity, worker execution adapters, and queue liveness; add graceful start/drain/shutdown and dependency failure behavior."
+    },
+    {
+      "capability_id": "purpose_capability_gap_reconstruction",
+      "state": "PARTIAL",
+      "required_work": "Prove semantic reconstruction against real heterogeneous repositories and lineage evidence; add structured evidence retrieval/normalization and refusal when purpose or material capability inference remains ambiguous."
+    },
+    {
+      "capability_id": "parallel_repository_crystallization",
+      "state": "PARTIAL",
+      "required_work": "Execute real repository work through the Swarm task engine rather than a standalone ThreadPool; bind repository dependency ordering, worker results, branch/PR evidence, retries, and resumable state into one orchestration path."
+    },
+    {
+      "capability_id": "estate_completion_ledger",
+      "state": "PARTIAL",
+      "required_work": "Persist the canonical estate ledger durably, reconcile repeated runs and repository renames/deletions/successors, record deployment endpoints/artifacts, and prove that unresolved counts cannot be lost between runs."
+    },
+    {
+      "capability_id": "dependency_and_shared_capability_graph",
+      "state": "MISSING",
+      "required_work": "Build repository lineage/dependency/shared-capability graph generation and use it to drive execution order, successor resolution, reusable component extraction, and cross-estate integration decisions."
+    },
+    {
+      "capability_id": "production_deployment",
+      "state": "MISSING",
+      "required_work": "Package and deploy the agent-service runtime with explicit environment/secrets contract, authenticated network boundary, health/readiness, structured logs, reproducible release, smoke test, and operational rollback; record a real deployment receipt."
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema": "glaciereq.crystallization-purpose.v1",
+  "canonical_identity": "GlacierEQ/GlacierEQ_Swarm",
+  "purpose": "Coordinate specialized execution workers across GlacierEQ and drive the codebase-wide CRYSTALLIZATION-MANDATE from repository intention through implementation, proof, deployment, and estate completion.",
+  "problem": "A large software estate cannot be completed reliably by isolated one-shot agents: work must be capability-routed, failure-tolerant, observable, persistent, execution-capable, and coordinated against an estate-wide dependency and completion model without governance becoming a substitute for function.",
+  "intended_outcome": "A continuously usable orchestration service can discover and register workers, route and execute real tasks, recover failed work, persist authoritative swarm state, expose machine interfaces and health, dispatch repository crystallization work in parallel, and maintain a truthful estate ledger until every in-scope repository is resolved.",
+  "consumers": [
+    "GlacierEQ estate control plane",
+    "repository crystallization workers",
+    "agent and MCP clients",
+    "human operator",
+    "CI and deployment systems"
+  ],
+  "system_kind": "agent_service",
+  "naturally_deployable": true,
+  "lineage": {
+    "predecessors": [],
+    "successors": [],
+    "duplicates": [],
+    "canonical_successor": null
+  },
+  "evidence": [
+    "README.md",
+    "src/mechanism.py",
+    "mastermind_sidecar.py",
+    "scripts/operate.py",
+    "automations/crystallization_executor.py",
+    "governance/CRYSTALLIZATION_MANDATE.yaml",
+    "tests/test_swarm.py",
+    ".github/verification/crystallization.sh",
+    "git history"
+  ]
+}

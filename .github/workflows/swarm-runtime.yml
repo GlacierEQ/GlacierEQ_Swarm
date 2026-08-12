@@ -1,0 +1,25 @@
+name: Swarm Runtime
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  durable-execution-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile execution runtime
+        run: |
+          python -m py_compile src/mechanism.py
+          python -m py_compile src/worker_adapters.py
+          python -m py_compile src/swarm_store.py
+          python -m py_compile src/swarm_runtime.py
+          python -m py_compile src/swarm_api.py
+      - name: Install runtime test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Prove restart, failover, persistence, and authenticated API
+        run: python -m pytest tests/test_swarm_runtime.py -q

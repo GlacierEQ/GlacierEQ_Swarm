@@ -12,3 +12,21 @@ jobs:
     with:
       repo_name: ${{ github.event.repository.name }}
       language: python
+      verify_script: .github/verification/crystallization.sh
+      strict: true
+
+  crystallization-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile crystallization machinery
+        run: |
+          python -m py_compile automations/estate_function_restorer.py
+          python -m py_compile automations/crystallization_executor.py
+      - name: Prove crystallization terminal-status law
+        run: python -m unittest automations/tests/test_crystallization_executor.py -v
+      - name: Preserve compatibility plumbing tests
+        run: python -m unittest automations/tests/test_estate_function_restorer.py -v
