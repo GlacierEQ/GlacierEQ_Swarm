@@ -1,0 +1,20 @@
+{
+  "host": "0.0.0.0",
+  "port": 8787,
+  "bearer_token_env": "GLACIEREQ_SWARM_TOKEN",
+  "store_path": "/data/swarm.sqlite3",
+  "workers": [
+    {
+      "worker_id": "echo-worker",
+      "capabilities": ["echo", "json"],
+      "max_concurrency": 2,
+      "adapter": {
+        "kind": "subprocess",
+        "argv": ["python", "/app/examples/swarm_worker_echo.py"],
+        "cwd": "/app",
+        "timeout_seconds": 60,
+        "max_output_bytes": 1048576
+      }
+    }
+  ]
+}
