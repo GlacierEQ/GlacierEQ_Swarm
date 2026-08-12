@@ -32,10 +32,22 @@ path = Path('.verification-artifacts/operate.json')
 data = json.loads(path.read_text(encoding='utf-8'))
 if not isinstance(data, dict):
     raise SystemExit('operate receipt must be a JSON object')
-if data.get('content_checked') is not True:
+smoke = data.get('smoke')
+if not isinstance(smoke, dict):
+    raise SystemExit('operate receipt missing smoke evidence')
+if smoke.get('content_checked') is not True:
     raise SystemExit('operate did not prove a content-checked mechanism call')
+if smoke.get('invoked') is not True:
+    raise SystemExit('operate did not invoke the mechanism')
 if not data.get('module'):
     raise SystemExit('operate receipt missing executed module identity')
+result = smoke.get('result')
+if not isinstance(result, dict):
+    raise SystemExit('operate smoke result must be structured')
+if result.get('status') != 'HEALTHY':
+    raise SystemExit('operate smoke result is not healthy')
+if (result.get('telemetry') or {}).get('status') != 'PASS':
+    raise SystemExit('operate smoke telemetry integrity did not pass')
 PY
 
 # Also execute the domain-native demonstrator directly rather than relying only
