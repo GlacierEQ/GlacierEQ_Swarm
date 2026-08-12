@@ -19,5 +19,7 @@ jobs:
           python -m py_compile src/swarm_store.py
           python -m py_compile src/swarm_runtime.py
           python -m py_compile src/swarm_api.py
+      - name: Install runtime test dependency
+        run: python -m pip install --disable-pip-version-check pytest
       - name: Prove restart, failover, persistence, and authenticated API
-        run: python -m unittest tests/test_swarm_runtime.py -v
+        run: python -m pytest tests/test_swarm_runtime.py -q
