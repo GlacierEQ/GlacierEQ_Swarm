@@ -68,10 +68,12 @@ class CrystallizationTransportTests(unittest.TestCase):
         )
         stdout = io.StringIO()
         stderr = io.StringIO()
-        with patch.object(sys, "stdin", FakeStdin(b'{"repository":"GlacierEQ/example"}')),
-             patch.object(sys, "stdout", stdout),
-             patch.object(sys, "stderr", stderr),
-             patch.object(transport.subprocess, "run", return_value=child):
+        with (
+            patch.object(sys, "stdin", FakeStdin(b'{"repository":"GlacierEQ/example"}')),
+            patch.object(sys, "stdout", stdout),
+            patch.object(sys, "stderr", stderr),
+            patch.object(transport.subprocess, "run", return_value=child),
+        ):
             code = transport.main()
         self.assertEqual(code, 0)
         value = json.loads(stdout.getvalue())
@@ -83,10 +85,12 @@ class CrystallizationTransportTests(unittest.TestCase):
         child = Completed(3, b"not-json", b"Traceback")
         stdout = io.StringIO()
         stderr = io.StringIO()
-        with patch.object(sys, "stdin", FakeStdin(b'{"repository":"GlacierEQ/example"}')),
-             patch.object(sys, "stdout", stdout),
-             patch.object(sys, "stderr", stderr),
-             patch.object(transport.subprocess, "run", return_value=child):
+        with (
+            patch.object(sys, "stdin", FakeStdin(b'{"repository":"GlacierEQ/example"}')),
+            patch.object(sys, "stdout", stdout),
+            patch.object(sys, "stderr", stderr),
+            patch.object(transport.subprocess, "run", return_value=child),
+        ):
             code = transport.main()
         self.assertEqual(code, 4)
         self.assertEqual(stdout.getvalue(), "")
