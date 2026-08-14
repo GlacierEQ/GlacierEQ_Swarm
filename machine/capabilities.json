@@ -1,1 +1,15 @@
-{"capabilities": ["hyper-scaling"]}
+{
+  "schema": "glaciereq.bounded-capabilities.v1",
+  "capabilities": [
+    "deterministic-capability-aware-task-orchestration",
+    "bounded-retry-and-worker-failure-recovery",
+    "integrity-chained-orchestration-telemetry",
+    "content-addressed-snapshot-and-recovery",
+    "purpose-first-repository-crystallization-execution",
+    "crystallization-terminal-status-enforcement"
+  ],
+  "local_execution_capability": true,
+  "production_operational_authority": false,
+  "automatic_estate_completion_authority": false,
+  "completion_requires_explicit_evidence": true
+}
