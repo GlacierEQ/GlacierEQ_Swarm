@@ -1,70 +1,55 @@
 {
   "schema": "glaciereq.repo-excellence-state.v1",
   "repository": "GlacierEQ/GlacierEQ_Swarm",
-  "principal_state": "DISCOVERED",
+  "principal_state": "FUNCTIONAL_CANDIDATE",
+  "state": "FUNCTIONAL_CANDIDATE",
+  "production_operational_authority": false,
+  "verified_scope": [
+    "deterministic-capability-aware-task-orchestration",
+    "bounded-retry-and-worker-failure-recovery",
+    "integrity-chained-orchestration-telemetry",
+    "content-addressed-snapshot-and-recovery",
+    "purpose-first-repository-crystallization-execution",
+    "crystallization-terminal-status-enforcement"
+  ],
   "gates": {
     "IDENTITY_RESOLVED": {
-      "status": "PENDING"
-    },
-    "PROBLEM_VERIFIED": {
-      "status": "PENDING"
-    },
-    "TARGET_CONTRACT_FROZEN": {
-      "status": "PENDING"
-    },
-    "DONOR_PLAN_RESOLVED": {
-      "status": "PENDING"
-    },
-    "VERTICAL_SLICE_ALIVE": {
-      "status": "PENDING"
+      "status": "PASS",
+      "evidence": "README identifies GlacierEQ Swarm as orchestration and crystallization control plane"
     },
     "CENTRAL_MECHANISM_PRESENT": {
-      "status": "PENDING"
+      "status": "PASS",
+      "evidence": "src/mechanism.py and automations/crystallization_executor.py"
+    },
+    "PRIOR_EXACT_HEAD_PROOF": {
+      "status": "PASS",
+      "evidence": {
+        "head_sha": "21c1fc7009c7f7c618396ab8c333990bd0ffc5db",
+        "workflow_run": 31641972928,
+        "conclusion": "success",
+        "jobs": [
+          "crystallization-contract",
+          "ci / python verification"
+        ]
+      }
+    },
+    "PROJECTION_TRUTH_CLOSED": {
+      "status": "PASS",
+      "evidence": "machine capability allowlist is bounded to implemented orchestration and crystallization mechanisms"
     },
     "DETERMINISTIC_PROOF_GREEN": {
-      "status": "PENDING"
-    },
-    "ADVERSARIAL_SURVIVAL": {
-      "status": "PENDING"
-    },
-    "OPERABLE_AND_OBSERVABLE": {
-      "status": "PENDING"
-    },
-    "PROOF_RECEIPT_BOUND": {
-      "status": "PENDING"
-    },
-    "AUTHORITY_BOUND": {
-      "status": "PENDING"
+      "status": "PENDING_CANONICAL_CI",
+      "evidence": "machine/CI truth-boundary changes require fresh successful proof on resulting canonical head"
     },
     "CANONICAL_POSITION_RESOLVED": {
       "status": "PENDING"
-    },
-    "EVOLUTION_CURSOR_DEFINED": {
-      "status": "PASS",
-      "at": "2026-08-10T06:12Z",
-      "evidence": "honest non-PROMOTED; cursor defined"
     }
   },
-  "history": [],
-  "contract_ref": "machine/target-contract.json",
-  "scores_ref": "machine/excellence-scores.json",
-  "evolution_cursor": "next:canonical_position_only_if_estate_role_resolved",
-  "wave": {
-    "id": "ELITE-ESTATE-SCHEMA-MIGRATE-2026-08-10",
-    "proof_ok": false,
-    "operable_ok": false,
-    "migrated_at": "2026-08-10T05:56Z",
-    "from_schema": "glaciereq.repo-excellence.record.v1",
-    "history_repaired_at": "2026-08-10T06:12Z"
-  },
-  "state": "DISCOVERED",
-  "gap_receipt_ref": "machine/gap-receipt.json",
-  "demotion": {
-    "at": "2026-08-10T05:56Z",
-    "from_claim": "PROMOTED",
-    "to": "DISCOVERED",
-    "reason": "schema migrate: PROMOTED XOR gap-receipt",
-    "blocker": "OPERATE_THEATER",
-    "rule": "PROMOTED XOR gap-receipt"
-  }
+  "nonclaims": [
+    "no automatic declaration that the estate is complete",
+    "no production operational authority over external repositories without supplied credentials and runtime",
+    "no guarantee that worker prompts can complete every repository",
+    "no deployment claim without repository-specific deployment evidence"
+  ],
+  "evolution_cursor": "fresh_exact_head_ci_then_surface_reconciliation"
 }

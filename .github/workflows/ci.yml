@@ -5,10 +5,14 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   ci:
-    uses: GlacierEQ/public-actions-runner-host/.github/workflows/reusable-quick-ci.yml@main
+    uses: GlacierEQ/public-actions-runner-host/.github/workflows/reusable-quick-ci.yml@53ae0832e4933161035ff44e389a0a1c84cf96b3
     with:
       repo_name: ${{ github.event.repository.name }}
       language: python
@@ -16,12 +20,19 @@ jobs:
       strict: true
 
   crystallization-contract:
+    name: Crystallization contract / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          python-version: "3.12"
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Compile crystallization machinery
         run: |
           python -m py_compile automations/estate_function_restorer.py
@@ -30,3 +41,5 @@ jobs:
         run: python -m unittest automations/tests/test_crystallization_executor.py -v
       - name: Preserve compatibility plumbing tests
         run: python -m unittest automations/tests/test_estate_function_restorer.py -v
+      - name: Enforce public truth boundary
+        run: python scripts/verify_public_truth.py
