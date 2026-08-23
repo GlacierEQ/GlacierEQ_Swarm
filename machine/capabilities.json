@@ -6,10 +6,30 @@
     "integrity-chained-orchestration-telemetry",
     "content-addressed-snapshot-and-recovery",
     "purpose-first-repository-crystallization-execution",
-    "crystallization-terminal-status-enforcement"
+    "crystallization-terminal-status-enforcement",
+    "apex-mass-recovery-enrolled"
   ],
   "local_execution_capability": true,
   "production_operational_authority": false,
   "automatic_estate_completion_authority": false,
-  "completion_requires_explicit_evidence": true
+  "completion_requires_explicit_evidence": true,
+  "recovery": {
+    "identity": "APEX_IS_THE_COUNTER_TO_CANONICAL_DESTRUCTION",
+    "law": "MAXIMUM_COHERENT_ADVANCE",
+    "program": "mass-job-repo-recovery",
+    "dual_plane": true
+  },
+  "planes": {
+    "verified": [
+      "deterministic-capability-aware-task-orchestration",
+      "bounded-retry-and-worker-failure-recovery",
+      "integrity-chained-orchestration-telemetry",
+      "content-addressed-snapshot-and-recovery",
+      "purpose-first-repository-crystallization-execution",
+      "crystallization-terminal-status-enforcement"
+    ],
+    "implemented": [
+      "apex-mass-recovery-enrolled"
+    ]
+  }
 }
