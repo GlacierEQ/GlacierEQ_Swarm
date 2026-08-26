@@ -35,11 +35,28 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Compile crystallization machinery
         run: |
-          python -m py_compile automations/estate_function_restorer.py
-          python -m py_compile automations/crystallization_executor.py
+          python -m py_compile \
+            automations/estate_function_restorer.py \
+            automations/estate_function_restorer_safe.py \
+            automations/crystallization_repo_worker.py \
+            automations/crystallization_work_unit.py \
+            automations/crystallization_swarm_dispatch.py \
+            automations/crystallization_executor.py
       - name: Prove crystallization terminal-status law
         run: python -m unittest automations/tests/test_crystallization_executor.py -v
-      - name: Preserve compatibility plumbing tests
+      - name: Prove persistent dispatch truth semantics
+        run: python -m unittest tests/test_crystallization_dispatch.py -v
+      - name: Prove crystallization source-preserving transport
+        run: python -m unittest tests/test_crystallization_source_transport.py -v
+      - name: Preserve legacy restorer verification plumbing
         run: python -m unittest automations/tests/test_estate_function_restorer.py -v
+      - name: Prove safe estate-restorer transport steering
+        run: python -m unittest tests/test_estate_restorer_source_transport.py -v
+      - name: Refuse force-push regression in active crystallization worker
+        run: |
+          if grep -n -- '--force-with-lease\|--force' automations/crystallization_repo_worker.py; then
+            echo "active crystallization worker contains forbidden force-push transport" >&2
+            exit 1
+          fi
       - name: Enforce public truth boundary
         run: python scripts/verify_public_truth.py
