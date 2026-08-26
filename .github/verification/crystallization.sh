@@ -4,10 +4,14 @@ set -euo pipefail
 ARTIFACTS=.verification-artifacts
 mkdir -p "$ARTIFACTS"
 
-# Compile only execution surfaces this workflow actually protects.
+# Compile execution and transport surfaces this workflow actually protects.
 python -m py_compile \
   src/mechanism.py \
   automations/estate_function_restorer.py \
+  automations/estate_function_restorer_safe.py \
+  automations/crystallization_repo_worker.py \
+  automations/crystallization_work_unit.py \
+  automations/crystallization_swarm_dispatch.py \
   automations/crystallization_executor.py \
   scripts/operate.py
 
@@ -16,11 +20,32 @@ python -m py_compile \
 python -m unittest tests/test_swarm.py -v \
   2>&1 | tee "$ARTIFACTS/swarm-behavior-tests.log"
 
-# Prove the CRYSTALLIZATION terminal-status law and compatibility plumbing.
+# Prove CRYSTALLIZATION terminal-status and persistent dispatch semantics.
 python -m unittest automations/tests/test_crystallization_executor.py -v \
   2>&1 | tee "$ARTIFACTS/crystallization-tests.log"
+python -m unittest tests/test_crystallization_dispatch.py -v \
+  2>&1 | tee "$ARTIFACTS/crystallization-dispatch-tests.log"
+
+# Lock source-preserving branch transmission: stable continuation branches,
+# prior-head checkpoints, descendant-only normal pushes, and hard divergence refusal.
+python -m unittest tests/test_crystallization_source_transport.py -v \
+  2>&1 | tee "$ARTIFACTS/crystallization-source-transport-tests.log"
+
+# Preserve the legacy restorer's verification plumbing while separately proving
+# that the recommended safe steering shell intercepts its force-push primitive.
 python -m unittest automations/tests/test_estate_function_restorer.py -v \
   2>&1 | tee "$ARTIFACTS/restorer-plumbing-tests.log"
+python -m unittest tests/test_estate_restorer_source_transport.py -v \
+  2>&1 | tee "$ARTIFACTS/restorer-source-transport-tests.log"
+
+# Static anti-regression: the active crystallization worker itself must not
+# contain a force-push option. The legacy raw restorer is allowed to retain the
+# intercepted call site until its implementation is fully folded into the safe
+# interface, but the safe shell test above proves that interface rewrites it.
+if grep -n -- '--force-with-lease\|--force' automations/crystallization_repo_worker.py; then
+  echo "active crystallization worker contains a forbidden force-push option" >&2
+  exit 1
+fi
 
 # Exercise the shipped runtime probe and preserve the emitted evidence.
 python scripts/operate.py | tee "$ARTIFACTS/operate.json"
@@ -73,7 +98,11 @@ rows = {}
 for path in sorted(p for p in artifacts.iterdir() if p.is_file()):
     rows[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
 (artifacts / 'verification-manifest.json').write_text(
-    json.dumps({'schema': 'glaciereq.swarm-functional-verification.v1', 'artifacts': rows}, indent=2, sort_keys=True) + '\n',
+    json.dumps(
+        {'schema': 'glaciereq.swarm-functional-verification.v1', 'artifacts': rows},
+        indent=2,
+        sort_keys=True,
+    ) + '\n',
     encoding='utf-8',
 )
 PY
