@@ -22,7 +22,8 @@ def worker_script(tmp_path: Path, name: str, *, succeed: bool = True) -> Path:
         body = (
             "import json,sys\n"
             "payload=json.load(sys.stdin)\n"
-            "print(json.dumps({'worker':'%s','echo':payload,'ok':True}, sort_keys=True))\n" % name
+            "print(json.dumps({'worker':'%s','echo':payload,'ok':True}, sort_keys=True))\n"
+            % name
         )
     else:
         body = (
@@ -35,7 +36,14 @@ def worker_script(tmp_path: Path, name: str, *, succeed: bool = True) -> Path:
     return path
 
 
-def configured(tmp_path: Path, worker_id: str, script: Path, *, caps=("python",), max_concurrency: int = 1):
+def configured(
+    tmp_path: Path,
+    worker_id: str,
+    script: Path,
+    *,
+    caps=("python",),
+    max_concurrency: int = 1,
+):
     adapter = SubprocessWorkerAdapter(
         worker_id=worker_id,
         argv=[sys.executable, str(script)],
@@ -53,12 +61,16 @@ def configured(tmp_path: Path, worker_id: str, script: Path, *, caps=("python",)
 def test_queued_task_survives_runtime_restart_and_executes(tmp_path: Path) -> None:
     script = worker_script(tmp_path, "worker.py")
     store_path = tmp_path / "swarm.sqlite3"
-    first = SwarmRuntime(SwarmStateStore(store_path), [configured(tmp_path, "worker", script)])
+    first = SwarmRuntime(
+        SwarmStateStore(store_path), [configured(tmp_path, "worker", script)]
+    )
     first.submit_task("task-1", ["python"], {"value": 42}, priority=5)
     before = first.status()
     assert before["task_status"]["QUEUED"] == 1
 
-    second = SwarmRuntime(SwarmStateStore(store_path), [configured(tmp_path, "worker", script)])
+    second = SwarmRuntime(
+        SwarmStateStore(store_path), [configured(tmp_path, "worker", script)]
+    )
     result = second.run_until_idle()
     assert result["status"] == "IDLE"
     task = second.task("task-1")
@@ -140,8 +152,12 @@ def test_http_api_requires_auth_and_executes_real_task(tmp_path: Path) -> None:
         [configured(tmp_path, "api-worker", script, caps=("python", "tests"))],
     )
     token = "t" * 32
-    server = SwarmHTTPServer(("127.0.0.1", 0), Handler, runtime=runtime, bearer_token=token)
-    thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True)
+    server = SwarmHTTPServer(
+        ("127.0.0.1", 0), Handler, runtime=runtime, bearer_token=token
+    )
+    thread = threading.Thread(
+        target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True
+    )
     thread.start()
     base = f"http://127.0.0.1:{server.server_address[1]}"
     try:
@@ -173,7 +189,9 @@ def test_http_api_requires_auth_and_executes_real_task(tmp_path: Path) -> None:
         assert status == 201
         assert submitted["status"] == "QUEUED"
 
-        status, executed = _request(base + "/v1/run-until-idle", method="POST", token=token, body={})
+        status, executed = _request(
+            base + "/v1/run-until-idle", method="POST", token=token, body={}
+        )
         assert status == 200
         assert executed["status"] == "IDLE"
 

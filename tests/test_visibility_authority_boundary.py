@@ -8,7 +8,9 @@ MODULE_PATH = ROOT / "automations" / "repo-public-promotion-flipper.py"
 
 
 def load_module():
-    spec = importlib.util.spec_from_file_location("repo_visibility_flipper", MODULE_PATH)
+    spec = importlib.util.spec_from_file_location(
+        "repo_visibility_flipper", MODULE_PATH
+    )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -52,7 +54,10 @@ def test_force_never_overrides_sensitive_or_secret_safety(monkeypatch) -> None:
     )
     sensitive = module.promote("example", force=True)
     assert sensitive["promoted"] is False
-    assert sensitive["reason"] == "sensitive_repository_requires_dedicated_disclosure_review"
+    assert (
+        sensitive["reason"]
+        == "sensitive_repository_requires_dedicated_disclosure_review"
+    )
 
     monkeypatch.setattr(
         module,

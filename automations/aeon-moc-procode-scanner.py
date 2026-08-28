@@ -2,6 +2,7 @@
 """Real flipper: Scan AEON MOC for pro-code files, load map, pointer outputs.
 Integrates with qualification for ecosystem data. Zero-LLM. Writes durable state.
 """
+
 import json
 import os
 from datetime import datetime, timezone
@@ -23,7 +24,9 @@ def scan():
                 for f in os.listdir(AEON_DIR)
                 if "pro-code" in f.lower() or "pro_code" in f.lower()
             ]
-        print(f"Found {len(pro_files)} pro-code MOC entries (ptr: full ls in background log)")
+        print(
+            f"Found {len(pro_files)} pro-code MOC entries (ptr: full ls in background log)"
+        )
     except Exception as e:
         err = str(e)
         print(f"Scan error: {e}")
@@ -38,7 +41,9 @@ def scan():
         err = (err + "; " if err else "") + str(e)
         print(f"Map error (ptr {MAP_P}): {e}")
 
-    print("Savings: pointers to MOC files. For runner: use these as additional pro-code data.")
+    print(
+        "Savings: pointers to MOC files. For runner: use these as additional pro-code data."
+    )
     print(f"Map: {MAP_P}")
     print(f"ptr: {OUT_P}")
 

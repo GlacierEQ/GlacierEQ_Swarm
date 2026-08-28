@@ -1,4 +1,5 @@
 """Persistent execution runtime joining scheduler, adapters, and state store."""
+
 from __future__ import annotations
 
 import threading
@@ -7,9 +8,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from mechanism import SwarmOrchestrator, WorkerStatus
+from mechanism import WorkerStatus
 from swarm_store import SwarmStateStore
-from worker_adapters import SubprocessWorkerAdapter, WorkerAdapter, WorkerExecutionReceipt
+from worker_adapters import SubprocessWorkerAdapter, WorkerAdapter
 
 
 @dataclass(frozen=True)
@@ -29,7 +30,9 @@ class SwarmRuntime:
     fresh swarm.
     """
 
-    def __init__(self, store: SwarmStateStore, workers: Iterable[ConfiguredWorker]) -> None:
+    def __init__(
+        self, store: SwarmStateStore, workers: Iterable[ConfiguredWorker]
+    ) -> None:
         self.store = store
         self._lock = threading.RLock()
         self.orchestrator, self.revision = store.load()
@@ -37,7 +40,9 @@ class SwarmRuntime:
         self._configure_workers(list(workers))
 
     @classmethod
-    def from_config(cls, config: Mapping[str, Any], *, config_base: str | Path = ".") -> "SwarmRuntime":
+    def from_config(
+        cls, config: Mapping[str, Any], *, config_base: str | Path = "."
+    ) -> "SwarmRuntime":
         if not isinstance(config, Mapping):
             raise ValueError("swarm_config_invalid")
         base = Path(config_base).resolve()
@@ -64,11 +69,24 @@ class SwarmRuntime:
             if worker_id in seen:
                 raise ValueError("swarm_worker_duplicate")
             seen.add(worker_id)
-            if not isinstance(capabilities, list) or not capabilities or not all(isinstance(item, str) and item.strip() for item in capabilities):
+            if (
+                not isinstance(capabilities, list)
+                or not capabilities
+                or not all(
+                    isinstance(item, str) and item.strip() for item in capabilities
+                )
+            ):
                 raise ValueError("swarm_worker_capabilities_invalid")
-            if not isinstance(max_concurrency, int) or isinstance(max_concurrency, bool) or max_concurrency <= 0:
+            if (
+                not isinstance(max_concurrency, int)
+                or isinstance(max_concurrency, bool)
+                or max_concurrency <= 0
+            ):
                 raise ValueError("swarm_worker_concurrency_invalid")
-            if not isinstance(adapter_raw, Mapping) or adapter_raw.get("kind") != "subprocess":
+            if (
+                not isinstance(adapter_raw, Mapping)
+                or adapter_raw.get("kind") != "subprocess"
+            ):
                 raise ValueError("swarm_worker_adapter_invalid")
             argv = adapter_raw.get("argv")
             cwd_raw = adapter_raw.get("cwd", ".")
@@ -83,7 +101,9 @@ class SwarmRuntime:
                 cwd=cwd,
                 timeout_seconds=int(adapter_raw.get("timeout_seconds", 1800)),
                 env=adapter_raw.get("env") or {},
-                max_output_bytes=int(adapter_raw.get("max_output_bytes", 8 * 1024 * 1024)),
+                max_output_bytes=int(
+                    adapter_raw.get("max_output_bytes", 8 * 1024 * 1024)
+                ),
             )
             workers.append(
                 ConfiguredWorker(
@@ -112,19 +132,31 @@ class SwarmRuntime:
                     )
                     changed = True
                 else:
-                    if sorted(current["capabilities"]) != sorted(worker.capabilities) or int(current["max_concurrency"]) != worker.max_concurrency:
-                        raise ValueError(f"configured_worker_contract_mismatch:{worker.worker_id}")
+                    if (
+                        sorted(current["capabilities"]) != sorted(worker.capabilities)
+                        or int(current["max_concurrency"]) != worker.max_concurrency
+                    ):
+                        raise ValueError(
+                            f"configured_worker_contract_mismatch:{worker.worker_id}"
+                        )
                     if current["status"] != WorkerStatus.ACTIVE.value:
-                        self.orchestrator.set_worker_status(worker.worker_id, WorkerStatus.ACTIVE)
+                        self.orchestrator.set_worker_status(
+                            worker.worker_id, WorkerStatus.ACTIVE
+                        )
                         changed = True
                 self.adapters[worker.worker_id] = worker.adapter
 
             for worker_id, current in existing.items():
-                if worker_id not in configured_ids and current["status"] != WorkerStatus.OFFLINE.value:
+                if (
+                    worker_id not in configured_ids
+                    and current["status"] != WorkerStatus.OFFLINE.value
+                ):
                     self.orchestrator.set_worker_status(worker_id, WorkerStatus.OFFLINE)
                     changed = True
             if changed:
-                self.revision = self.store.save(self.orchestrator, expected_revision=self.revision)
+                self.revision = self.store.save(
+                    self.orchestrator, expected_revision=self.revision
+                )
 
     def submit_task(
         self,
@@ -147,7 +179,9 @@ class SwarmRuntime:
                 )
                 task = submission["task"]
                 self.store.put_task_payload(task_id, payload, task["payload_digest"])
-                self.revision = self.store.save(self.orchestrator, expected_revision=before)
+                self.revision = self.store.save(
+                    self.orchestrator, expected_revision=before
+                )
                 return {**submission, "store_revision": self.revision}
             except Exception:
                 self.orchestrator, self.revision = self.store.load()
@@ -165,21 +199,31 @@ class SwarmRuntime:
             assignments = list(dispatch["assignments"])
             if not assignments:
                 return {
-                    "status": "IDLE" if dispatch["queued_remaining"] == 0 else "BLOCKED",
+                    "status": "IDLE"
+                    if dispatch["queued_remaining"] == 0
+                    else "BLOCKED",
                     "assignments": [],
                     "queued_remaining": dispatch["queued_remaining"],
                     "store_revision": self.revision,
                 }
             for assignment in assignments:
-                self.orchestrator.start_task(assignment["task_id"], assignment["worker_id"])
-            self.revision = self.store.save(self.orchestrator, expected_revision=self.revision)
+                self.orchestrator.start_task(
+                    assignment["task_id"], assignment["worker_id"]
+                )
+            self.revision = self.store.save(
+                self.orchestrator, expected_revision=self.revision
+            )
             execution_inputs: list[tuple[dict[str, Any], Any, WorkerAdapter]] = []
             for assignment in assignments:
                 row = self._task_row(assignment["task_id"])
-                payload = self.store.get_task_payload(assignment["task_id"], row["payload_digest"])
+                payload = self.store.get_task_payload(
+                    assignment["task_id"], row["payload_digest"]
+                )
                 adapter = self.adapters.get(assignment["worker_id"])
                 if adapter is None:
-                    raise ValueError(f"worker_adapter_missing:{assignment['worker_id']}")
+                    raise ValueError(
+                        f"worker_adapter_missing:{assignment['worker_id']}"
+                    )
                 execution_inputs.append((assignment, payload, adapter))
 
         results: list[dict[str, Any]] = []
@@ -200,8 +244,14 @@ class SwarmRuntime:
                     task_id = assignment["task_id"]
                     worker_id = assignment["worker_id"]
                     if receipt is not None and receipt.status == "PASS":
-                        transition = self.orchestrator.complete_task(task_id, worker_id, receipt.result)
-                        self.store.put_task_result(task_id, receipt.result, receipt.as_dict(include_result=False))
+                        transition = self.orchestrator.complete_task(
+                            task_id, worker_id, receipt.result
+                        )
+                        self.store.put_task_result(
+                            task_id,
+                            receipt.result,
+                            receipt.as_dict(include_result=False),
+                        )
                         outcome = {
                             "task_id": task_id,
                             "worker_id": worker_id,
@@ -216,7 +266,9 @@ class SwarmRuntime:
                         else:
                             error = f"worker_exit:{receipt.returncode}:{receipt.stderr_tail[-500:]}"
                             execution_doc = receipt.as_dict()
-                        transition = self.orchestrator.fail_task(task_id, worker_id, error)
+                        transition = self.orchestrator.fail_task(
+                            task_id, worker_id, error
+                        )
                         outcome = {
                             "task_id": task_id,
                             "worker_id": worker_id,
@@ -224,7 +276,9 @@ class SwarmRuntime:
                             "scheduler": transition,
                             "execution": execution_doc,
                         }
-                    self.revision = self.store.save(self.orchestrator, expected_revision=self.revision)
+                    self.revision = self.store.save(
+                        self.orchestrator, expected_revision=self.revision
+                    )
                     outcome["store_revision"] = self.revision
                     results.append(outcome)
         results.sort(key=lambda row: row["task_id"])
@@ -238,7 +292,11 @@ class SwarmRuntime:
         }
 
     def run_until_idle(self, *, max_cycles: int = 1000) -> dict[str, Any]:
-        if not isinstance(max_cycles, int) or isinstance(max_cycles, bool) or max_cycles <= 0:
+        if (
+            not isinstance(max_cycles, int)
+            or isinstance(max_cycles, bool)
+            or max_cycles <= 0
+        ):
             raise ValueError("max_cycles_invalid")
         cycles: list[dict[str, Any]] = []
         for _ in range(max_cycles):

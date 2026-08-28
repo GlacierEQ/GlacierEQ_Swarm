@@ -6,6 +6,7 @@ Auditors re-verify grants with LOCAL_OPERATOR_SECRET and
 scripts/verify_promotion_grant.py against machine/promotion_authority.json
 bound to machine/proof_receipt.json digest + source_sha.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -20,7 +21,9 @@ LOCAL_OPERATOR_SECRET = b"glaciereq-local-operator-promotion-authority-v1"
 
 
 def _digest(obj: object) -> str:
-    return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -32,13 +35,15 @@ class PromotionGrant:
     mac: str
 
     def fingerprint(self) -> str:
-        return _digest({
-            "repository": self.repository,
-            "source_sha": self.source_sha,
-            "proof_receipt_digest": self.proof_receipt_digest,
-            "not_after": self.not_after,
-            "mac": self.mac,
-        })
+        return _digest(
+            {
+                "repository": self.repository,
+                "source_sha": self.source_sha,
+                "proof_receipt_digest": self.proof_receipt_digest,
+                "not_after": self.not_after,
+                "mac": self.mac,
+            }
+        )
 
     @classmethod
     def from_dict(cls, d: dict) -> "PromotionGrant":
@@ -60,14 +65,22 @@ class PromotionAuthority:
         self._secret = secret
         self._ttl = ttl_s
 
-    def issue(self, repository: str, source_sha: str, proof_receipt_digest: str, now: float | None = None) -> PromotionGrant:
+    def issue(
+        self,
+        repository: str,
+        source_sha: str,
+        proof_receipt_digest: str,
+        now: float | None = None,
+    ) -> PromotionGrant:
         t = time.time() if now is None else now
         na = t + self._ttl
         body = f"{repository}|{source_sha}|{proof_receipt_digest}|{na}"
         mac = hmac.new(self._secret, body.encode(), hashlib.sha256).hexdigest()
         return PromotionGrant(repository, source_sha, proof_receipt_digest, na, mac)
 
-    def verify(self, grant: PromotionGrant, now: float | None = None) -> tuple[bool, str | None]:
+    def verify(
+        self, grant: PromotionGrant, now: float | None = None
+    ) -> tuple[bool, str | None]:
         t = time.time() if now is None else now
         if t > grant.not_after:
             return False, "GRANT_EXPIRED"
@@ -94,6 +107,7 @@ def verify_bound_grant(
     Fail-closed on any mismatch.
     """
     from pathlib import Path as _P
+
     path = _P(proof_receipt_path)
     if not path.is_file():
         return False, "PROOF_RECEIPT_MISSING"
@@ -111,5 +125,7 @@ def verify_bound_grant(
         grant = PromotionGrant.from_dict(grant_dict)
     except Exception:
         return False, "GRANT_MALFORMED"
-    auth = PromotionAuthority(secret, ttl_s=max(1.0, float(grant.not_after) - (now or time.time()) + 1.0))
+    auth = PromotionAuthority(
+        secret, ttl_s=max(1.0, float(grant.not_after) - (now or time.time()) + 1.0)
+    )
     return auth.verify(grant, now=now)

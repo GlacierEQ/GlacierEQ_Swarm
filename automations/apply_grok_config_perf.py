@@ -4,6 +4,7 @@
 Backs up to ~/.grok/config.toml.bak-TIMESTAMP.
 Does not set ui.yolo unless --force-ui-yolo.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -55,12 +56,17 @@ def apply(force_ui_yolo: bool = False) -> dict:
     for sec, key, val in ops:
         text = upsert_section_kv(text, sec, key, val)
     if "[memory.search]" not in text:
-        text = text.rstrip() + "\n\n[memory.search]\nmax_results = 8\nmin_score = 0.35\n"
+        text = (
+            text.rstrip() + "\n\n[memory.search]\nmax_results = 8\nmin_score = 0.35\n"
+        )
     else:
         text = upsert_section_kv(text, "memory.search", "max_results", "8")
         text = upsert_section_kv(text, "memory.search", "min_score", "0.35")
     if "[memory.initial_injection]" not in text:
-        text = text.rstrip() + "\n\n[memory.initial_injection]\nenabled = true\nmin_score = 0.20\n"
+        text = (
+            text.rstrip()
+            + "\n\n[memory.initial_injection]\nenabled = true\nmin_score = 0.20\n"
+        )
     else:
         text = upsert_section_kv(text, "memory.initial_injection", "enabled", "true")
         text = upsert_section_kv(text, "memory.initial_injection", "min_score", "0.20")

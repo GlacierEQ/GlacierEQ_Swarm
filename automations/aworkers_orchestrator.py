@@ -10,6 +10,7 @@ Usage:
   python3 aworkers_orchestrator.py run              # default massive pack
   python3 aworkers_orchestrator.py run --goal "..." # custom goal label
 """
+
 from __future__ import annotations
 
 import argparse
@@ -90,7 +91,9 @@ def run_flipper(script: str, timeout: int = 300) -> dict:
         return rec
 
 
-def merge_memory(goal: str, results: list[dict], cathedral: str | None, case_id: str | None) -> dict:
+def merge_memory(
+    goal: str, results: list[dict], cathedral: str | None, case_id: str | None
+) -> dict:
     mem = load_json(MEMORY, {})
     mem["ts"] = now()
     sess = mem.setdefault("session", {})
@@ -149,7 +152,7 @@ def status() -> int:
     print(f"registry layers: {list((reg.get('layers') or {}).keys())}")
     print("L1 flippers available:")
     for s in DEFAULT_PACK:
-        print(f"  {'OK' if (AUTO/s).is_file() else 'MISSING'} {s}")
+        print(f"  {'OK' if (AUTO / s).is_file() else 'MISSING'} {s}")
     print(f"ptr: {LAST if LAST.exists() else '(no run yet)'}")
     return 0
 
@@ -167,7 +170,9 @@ def run(goal: str, cathedral: str | None, case_id: str | None, max_workers: int)
         for fut in as_completed(futs):
             rec = fut.result()
             results.append(rec)
-            print(f"  [{rec['status']}] {rec['worker_id']} {rec.get('outputs_ptr') or rec.get('error') or ''}")
+            print(
+                f"  [{rec['status']}] {rec['worker_id']} {rec.get('outputs_ptr') or rec.get('error') or ''}"
+            )
 
     mem = merge_memory(goal, results, cathedral, case_id)
     report = {
@@ -201,7 +206,9 @@ def run(goal: str, cathedral: str | None, case_id: str | None, max_workers: int)
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="AWorkers meta-orchestrator")
     p.add_argument("cmd", nargs="?", default="status", choices=["status", "run"])
-    p.add_argument("--goal", default="massive local pack: stability + token + map + qual")
+    p.add_argument(
+        "--goal", default="massive local pack: stability + token + map + qual"
+    )
     p.add_argument("--cathedral", default="AKOS / Grok Engineering")
     p.add_argument("--case", default="engineering_qualification", dest="case_id")
     p.add_argument("--max-workers", type=int, default=3)

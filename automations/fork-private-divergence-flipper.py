@@ -16,6 +16,7 @@ Uses existing scan: state/fork_divergence_scan_2026-07-12.json
 
 Token-saver: all large results → state JSON; stdout = counts only.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -40,7 +41,12 @@ MIN_AHEAD, MAX_AHEAD, MAX_SIZE = 3, 80, 200_000
 
 
 def token() -> str:
-    for k in ("GITHUB_PRIMARY_TOKEN", "GITHUB_TOKEN_PRIMARY", "GITHUB_MASTER_TOKEN", "GITHUB_TOKEN"):
+    for k in (
+        "GITHUB_PRIMARY_TOKEN",
+        "GITHUB_TOKEN_PRIMARY",
+        "GITHUB_MASTER_TOKEN",
+        "GITHUB_TOKEN",
+    ):
         v = os.environ.get(k)
         if v and len(v) > 20:
             return v
@@ -67,7 +73,9 @@ def api(method: str, path: str, data: Any = None, timeout: int = 90) -> tuple[in
 def run(cmd: list[str], cwd: str | None = None, timeout: int = 300) -> tuple[int, str]:
     env = os.environ.copy()
     env["GIT_TERMINAL_PROMPT"] = "0"
-    p = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env)
+    p = subprocess.run(
+        cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, env=env
+    )
     return p.returncode, (p.stderr or p.stdout or "")[-400:]
 
 
@@ -98,7 +106,12 @@ def smart_list(scan: dict) -> list[dict]:
 def convert_one(e: dict) -> dict:
     name = e["name"]
     archive = f"{name}__public_fork_archive"
-    result: dict[str, Any] = {"name": name, "ahead": e.get("ahead"), "parent": e.get("parent"), "steps": []}
+    result: dict[str, Any] = {
+        "name": name,
+        "ahead": e.get("ahead"),
+        "parent": e.get("parent"),
+        "steps": [],
+    }
 
     st, existing = api("GET", f"/repos/{OWNER}/{name}")
     if st == 200 and existing.get("private") and not existing.get("fork"):
@@ -147,7 +160,9 @@ def convert_one(e: dict) -> dict:
     try:
         src = f"https://x-access-token:{token()}@github.com/{OWNER}/{archive}.git"
         dst = f"https://x-access-token:{token()}@github.com/{OWNER}/{name}.git"
-        code, err = run(["git", "clone", "--bare", src, str(tmp / "m.git")], timeout=300)
+        code, err = run(
+            ["git", "clone", "--bare", src, str(tmp / "m.git")], timeout=300
+        )
         result["steps"].append({"clone": code})
         if code != 0:
             result["status"] = "clone_fail"
@@ -224,7 +239,9 @@ def main() -> int:
         return 1
     scan = json.loads(SCAN.read_text())
     smart = smart_list(scan)
-    print(f"scan_qualify={scan.get('qualify_count')} smart_tier={len(smart)} limit={args.limit}")
+    print(
+        f"scan_qualify={scan.get('qualify_count')} smart_tier={len(smart)} limit={args.limit}"
+    )
 
     if args.dry_run or not args.convert:
         report = {
@@ -232,17 +249,26 @@ def main() -> int:
             "mode": "dry_run",
             "smart_tier": len(smart),
             "names": [e["name"] for e in smart[: args.limit]],
-            "criteria": {"min_ahead": MIN_AHEAD, "max_ahead": MAX_AHEAD, "max_size_kb": MAX_SIZE, "legal_ahead_ge": 1},
+            "criteria": {
+                "min_ahead": MIN_AHEAD,
+                "max_ahead": MAX_AHEAD,
+                "max_size_kb": MAX_SIZE,
+                "legal_ahead_ge": 1,
+            },
         }
         OUT.write_text(json.dumps(report, indent=2))
-        print("dry names:", ", ".join(report["names"][:20]), ("..." if len(smart) > 20 else ""))
+        print(
+            "dry names:",
+            ", ".join(report["names"][:20]),
+            ("..." if len(smart) > 20 else ""),
+        )
         print("ptr:", OUT)
         return 0
 
     batch = smart[: args.limit]
     results = []
     for i, e in enumerate(batch):
-        print(f"[{i+1}/{len(batch)}] {e['name']} ahead={e.get('ahead')}", flush=True)
+        print(f"[{i + 1}/{len(batch)}] {e['name']} ahead={e.get('ahead')}", flush=True)
         try:
             r = convert_one(e)
         except Exception as ex:
@@ -263,10 +289,17 @@ def main() -> int:
     }
     OUT.write_text(json.dumps(report, indent=2))
     # also durable dated
-    (STATE / "fork_private_conversion_2026-07-12.json").write_text(json.dumps(report, indent=2))
+    (STATE / "fork_private_conversion_2026-07-12.json").write_text(
+        json.dumps(report, indent=2)
+    )
     print("SUMMARY", summary)
     print("ptr:", OUT)
-    return 0 if summary.get("converted_private", 0) + summary.get("already_private_non_fork", 0) else 1
+    return (
+        0
+        if summary.get("converted_private", 0)
+        + summary.get("already_private_non_fork", 0)
+        else 1
+    )
 
 
 if __name__ == "__main__":

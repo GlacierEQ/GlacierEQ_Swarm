@@ -50,7 +50,9 @@ class CrystallizationExecutorTests(unittest.TestCase):
         status = crystal.classify(
             purpose={"purpose": "solve the thing"},
             capabilities=[cap],
-            gaps=[{"capability_id": "missing-integration", "required_work": "build it"}],
+            gaps=[
+                {"capability_id": "missing-integration", "required_work": "build it"}
+            ],
             blockers=[],
             test_ok=True,
             build_ok=True,
@@ -91,17 +93,24 @@ class CrystallizationExecutorTests(unittest.TestCase):
             machine = repo / crystal.MACHINE
             machine.mkdir(parents=True)
             (machine / "purpose-manifest.json").write_text(
-                json.dumps({
-                    "canonical_identity": "demo",
-                    "purpose": "demonstrate real behavior",
-                    "problem": "a real problem",
-                    "intended_outcome": "an executable outcome",
-                    "consumers": ["human"],
-                    "system_kind": "cli",
-                    "naturally_deployable": False,
-                    "lineage": {"predecessors": [], "successors": [], "duplicates": [], "canonical_successor": None},
-                    "evidence": ["src/core.py"],
-                }),
+                json.dumps(
+                    {
+                        "canonical_identity": "demo",
+                        "purpose": "demonstrate real behavior",
+                        "problem": "a real problem",
+                        "intended_outcome": "an executable outcome",
+                        "consumers": ["human"],
+                        "system_kind": "cli",
+                        "naturally_deployable": False,
+                        "lineage": {
+                            "predecessors": [],
+                            "successors": [],
+                            "duplicates": [],
+                            "canonical_successor": None,
+                        },
+                        "evidence": ["src/core.py"],
+                    }
+                ),
                 encoding="utf-8",
             )
             missing = working_cap("missing")
@@ -110,7 +119,9 @@ class CrystallizationExecutorTests(unittest.TestCase):
                 json.dumps({"capabilities": [missing]}),
                 encoding="utf-8",
             )
-            (machine / "gap-matrix.json").write_text(json.dumps({"gaps": []}), encoding="utf-8")
+            (machine / "gap-matrix.json").write_text(
+                json.dumps({"gaps": []}), encoding="utf-8"
+            )
             _, _, _, blockers = crystal.validate_manifests(repo)
             self.assertIn("gap_matrix_omits:missing", blockers)
 
@@ -139,7 +150,9 @@ class CrystallizationExecutorTests(unittest.TestCase):
     def test_fake_scaffold_marker_blocks_terminal_truth(self):
         with tempfile.TemporaryDirectory() as td:
             repo = Path(td)
-            (repo / "README.md").write_text("## Current scaffold state\n", encoding="utf-8")
+            (repo / "README.md").write_text(
+                "## Current scaffold state\n", encoding="utf-8"
+            )
             hits = crystal.scan_fake_completion(repo)
             self.assertTrue(any("Current scaffold state" in hit for hit in hits))
 

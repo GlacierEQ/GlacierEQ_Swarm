@@ -1,4 +1,5 @@
 """Durable canonical ledger for estate-wide CRYSTALLIZATION-MANDATE progress."""
+
 from __future__ import annotations
 
 import hashlib
@@ -9,7 +10,16 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 TERMINAL = {"CRYSTALLIZED", "CANONICALIZED_SUCCESSOR", "INTENTIONALLY_ARCHIVED"}
-UNRESOLVED = {"UNKNOWN", "DISCOVERED", "UNDERSTOOD", "BROKEN", "INCOMPLETE", "FUNCTIONAL", "COMPLETE", "DEPLOYED"}
+UNRESOLVED = {
+    "UNKNOWN",
+    "DISCOVERED",
+    "UNDERSTOOD",
+    "BROKEN",
+    "INCOMPLETE",
+    "FUNCTIONAL",
+    "COMPLETE",
+    "DEPLOYED",
+}
 
 
 def _now() -> str:
@@ -100,9 +110,12 @@ class CrystallizationLedger:
             for row in rows:
                 repository = str(row["full_name"])
                 metadata_json = _json(row)
-                metadata_digest = hashlib.sha256(metadata_json.encode("utf-8")).hexdigest()
+                metadata_digest = hashlib.sha256(
+                    metadata_json.encode("utf-8")
+                ).hexdigest()
                 existing = connection.execute(
-                    "SELECT first_seen FROM repositories WHERE repository=?", (repository,)
+                    "SELECT first_seen FROM repositories WHERE repository=?",
+                    (repository,),
                 ).fetchone()
                 first_seen = str(existing["first_seen"]) if existing else recorded
                 connection.execute(
@@ -117,7 +130,14 @@ class CrystallizationLedger:
                         last_seen=excluded.last_seen,
                         inventory_generation=excluded.inventory_generation
                     """,
-                    (repository, metadata_json, metadata_digest, first_seen, recorded, generation),
+                    (
+                        repository,
+                        metadata_json,
+                        metadata_digest,
+                        first_seen,
+                        recorded,
+                        generation,
+                    ),
                 )
             connection.commit()
             return generation
@@ -127,7 +147,9 @@ class CrystallizationLedger:
         finally:
             connection.close()
 
-    def record_work_unit(self, task_id: str, repository: str, generation: int, result: Mapping[str, Any]) -> None:
+    def record_work_unit(
+        self, task_id: str, repository: str, generation: int, result: Mapping[str, Any]
+    ) -> None:
         if not isinstance(task_id, str) or not task_id:
             raise ValueError("ledger_task_id_invalid")
         if not isinstance(repository, str) or "/" not in repository:
@@ -153,9 +175,12 @@ class CrystallizationLedger:
                     connection.commit()
                     return
                 raise ValueError("ledger_task_result_conflict")
-            if connection.execute(
-                "SELECT 1 FROM repositories WHERE repository=?", (repository,)
-            ).fetchone() is None:
+            if (
+                connection.execute(
+                    "SELECT 1 FROM repositories WHERE repository=?", (repository,)
+                ).fetchone()
+                is None
+            ):
                 raise ValueError("ledger_repository_not_in_inventory")
             connection.execute(
                 """
@@ -164,7 +189,15 @@ class CrystallizationLedger:
                     result_digest, repository_status, recorded_at
                 ) VALUES(?, ?, ?, ?, ?, ?, ?)
                 """,
-                (task_id, repository, generation, result_json, result_digest, status, _now()),
+                (
+                    task_id,
+                    repository,
+                    generation,
+                    result_json,
+                    result_digest,
+                    status,
+                    _now(),
+                ),
             )
             connection.commit()
         except Exception:
@@ -275,12 +308,18 @@ class CrystallizationLedger:
             ).fetchall()
         known = {row["repository"] for row in repos}
         for row in repos:
-            if hashlib.sha256(str(row["metadata_json"]).encode("utf-8")).hexdigest() != row["metadata_digest"]:
+            if (
+                hashlib.sha256(str(row["metadata_json"]).encode("utf-8")).hexdigest()
+                != row["metadata_digest"]
+            ):
                 errors.append(f"metadata_corrupt:{row['repository']}")
         for row in work:
             if row["repository"] not in known:
                 errors.append(f"work_unit_orphan:{row['task_id']}")
-            if hashlib.sha256(str(row["result_json"]).encode("utf-8")).hexdigest() != row["result_digest"]:
+            if (
+                hashlib.sha256(str(row["result_json"]).encode("utf-8")).hexdigest()
+                != row["result_digest"]
+            ):
                 errors.append(f"work_unit_corrupt:{row['task_id']}")
             try:
                 doc = json.loads(row["result_json"])

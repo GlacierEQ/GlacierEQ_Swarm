@@ -14,6 +14,7 @@ Core law:
 The restorer is intentionally fail-closed. A worker can modify a repository,
 but the repository is not marked repaired unless native verification passes.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -36,9 +37,31 @@ DEFAULT_ROOT = Path.home() / "estate-function-repair"
 STATE_ROOT = Path.home() / "GlacierEQ_Swarm" / "state" / "estate_function_repair"
 REPO_NAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 SOURCE_SUFFIXES = {
-    ".py", ".ts", ".tsx", ".js", ".jsx", ".rs", ".go", ".java", ".kt",
-    ".c", ".cc", ".cpp", ".h", ".hpp", ".cs", ".rb", ".php", ".swift",
-    ".sql", ".sh", ".yaml", ".yml", ".json", ".toml", ".md",
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".rs",
+    ".go",
+    ".java",
+    ".kt",
+    ".c",
+    ".cc",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".cs",
+    ".rb",
+    ".php",
+    ".swift",
+    ".sql",
+    ".sh",
+    ".yaml",
+    ".yml",
+    ".json",
+    ".toml",
+    ".md",
 }
 SCaffold_MARKERS = (
     "This leaf is a **scaffold**",
@@ -125,7 +148,9 @@ def load_priority_names(path: Path | None) -> set[str]:
     if isinstance(raw, list):
         values = raw
     elif isinstance(raw, dict):
-        values = raw.get("repositories") or raw.get("repos") or raw.get("priority") or []
+        values = (
+            raw.get("repositories") or raw.get("repos") or raw.get("priority") or []
+        )
     else:
         values = []
     out: set[str] = set()
@@ -144,9 +169,14 @@ def discover_native_repositories(owner: str = OWNER) -> list[RepoTarget]:
     require_tool("gh")
     result = run(
         [
-            "gh", "repo", "list", owner,
-            "--limit", "1000",
-            "--json", "name,isFork,isArchived,visibility,description,defaultBranchRef,pushedAt",
+            "gh",
+            "repo",
+            "list",
+            owner,
+            "--limit",
+            "1000",
+            "--json",
+            "name,isFork,isArchived,visibility,description,defaultBranchRef,pushedAt",
         ],
         timeout=120,
         check=True,
@@ -181,9 +211,25 @@ def target_priority(target: RepoTarget, priority_names: set[str]) -> tuple[int, 
         score += 500
     lower = target.name.lower()
     recruiter_prefixes = (
-        "openai", "anthropic", "nvidia", "xai", "spacex", "anduril", "palantir",
-        "groq", "microsoft", "notion", "vercel", "cloudflare", "supabase",
-        "pinecone", "qdrant", "coreweave", "cursor", "linear", "mistral",
+        "openai",
+        "anthropic",
+        "nvidia",
+        "xai",
+        "spacex",
+        "anduril",
+        "palantir",
+        "groq",
+        "microsoft",
+        "notion",
+        "vercel",
+        "cloudflare",
+        "supabase",
+        "pinecone",
+        "qdrant",
+        "coreweave",
+        "cursor",
+        "linear",
+        "mistral",
     )
     if lower.startswith(recruiter_prefixes):
         score += 300
@@ -200,12 +246,23 @@ def ensure_checkout(target: RepoTarget, root: Path) -> Path:
             raise RuntimeError(f"path exists but is not git repo: {repo}")
         dirty = run(["git", "status", "--porcelain"], cwd=repo, timeout=30, check=True)
         if dirty.stdout.strip():
-            raise RuntimeError("local worktree is dirty; refusing to overwrite human work")
+            raise RuntimeError(
+                "local worktree is dirty; refusing to overwrite human work"
+            )
         run(["git", "fetch", "origin", "--prune"], cwd=repo, timeout=180, check=True)
     else:
-        run(["gh", "repo", "clone", f"{OWNER}/{target.name}", str(repo)], timeout=600, check=True)
+        run(
+            ["gh", "repo", "clone", f"{OWNER}/{target.name}", str(repo)],
+            timeout=600,
+            check=True,
+        )
     run(["git", "checkout", target.default_branch], cwd=repo, timeout=60, check=True)
-    run(["git", "reset", "--hard", f"origin/{target.default_branch}"], cwd=repo, timeout=60, check=True)
+    run(
+        ["git", "reset", "--hard", f"origin/{target.default_branch}"],
+        cwd=repo,
+        timeout=60,
+        check=True,
+    )
     return repo
 
 
@@ -217,21 +274,47 @@ def repair_branch_name(repo_name: str) -> str:
 
 def prepare_branch(repo: Path, target: RepoTarget) -> str:
     branch = repair_branch_name(target.name)
-    existing = run(["git", "branch", "--list", branch], cwd=repo, timeout=30, check=True)
+    existing = run(
+        ["git", "branch", "--list", branch], cwd=repo, timeout=30, check=True
+    )
     if existing.stdout.strip():
         run(["git", "branch", "-D", branch], cwd=repo, timeout=30, check=True)
-    run(["git", "checkout", "-b", branch, f"origin/{target.default_branch}"], cwd=repo, timeout=60, check=True)
+    run(
+        ["git", "checkout", "-b", branch, f"origin/{target.default_branch}"],
+        cwd=repo,
+        timeout=60,
+        check=True,
+    )
     return branch
 
 
 def native_evidence_paths(repo: Path) -> list[str]:
     candidates = [
-        "ISSUE_CONTRACT.md", "TARGET_CONTRACT.md", "README.md", "QUALITY.md",
-        "DEV_UP_INSTRUCTIONS.md", "ARCHITECTURE.md", "pyproject.toml", "package.json",
-        "Cargo.toml", "go.mod", "Makefile", "Dockerfile", "vercel.json", "fly.toml",
+        "ISSUE_CONTRACT.md",
+        "TARGET_CONTRACT.md",
+        "README.md",
+        "QUALITY.md",
+        "DEV_UP_INSTRUCTIONS.md",
+        "ARCHITECTURE.md",
+        "pyproject.toml",
+        "package.json",
+        "Cargo.toml",
+        "go.mod",
+        "Makefile",
+        "Dockerfile",
+        "vercel.json",
+        "fly.toml",
     ]
     found = [p for p in candidates if (repo / p).exists()]
-    for extra in ("src", "tests", ".github/workflows", "scripts", "deploy", "docs", "machine"):
+    for extra in (
+        "src",
+        "tests",
+        ".github/workflows",
+        "scripts",
+        "deploy",
+        "docs",
+        "machine",
+    ):
         if (repo / extra).exists():
             found.append(extra + "/")
     return found
@@ -295,7 +378,9 @@ def worker_prompt(target: RepoTarget, repo: Path) -> str:
     ).strip()
 
 
-def invoke_worker(target: RepoTarget, repo: Path, *, worker_cmd: str | None) -> CommandResult:
+def invoke_worker(
+    target: RepoTarget, repo: Path, *, worker_cmd: str | None
+) -> CommandResult:
     prompt = worker_prompt(target, repo)
     if worker_cmd:
         argv = worker_cmd.split() + [prompt]
@@ -307,7 +392,16 @@ def invoke_worker(target: RepoTarget, repo: Path, *, worker_cmd: str | None) -> 
 
 def source_tree_sha(repo: Path) -> str:
     rows: list[str] = []
-    excluded = {".git", "node_modules", ".venv", "venv", "dist", "build", "target", "__pycache__"}
+    excluded = {
+        ".git",
+        "node_modules",
+        ".venv",
+        "venv",
+        "dist",
+        "build",
+        "target",
+        "__pycache__",
+    }
     for path in sorted(repo.rglob("*")):
         if not path.is_file() or any(part in excluded for part in path.parts):
             continue
@@ -351,12 +445,26 @@ def changed_files(repo: Path) -> list[str]:
 
 def infer_test_commands(repo: Path) -> list[list[str]]:
     commands: list[list[str]] = []
-    if (repo / "pyproject.toml").exists() or (repo / "pytest.ini").exists() or (repo / "tests").is_dir():
+    if (
+        (repo / "pyproject.toml").exists()
+        or (repo / "pytest.ini").exists()
+        or (repo / "tests").is_dir()
+    ):
         if shutil.which("python3"):
-            if shutil.which("pytest") or "pytest" in (repo / "pyproject.toml").read_text(encoding="utf-8", errors="ignore") if (repo / "pyproject.toml").exists() else False:
+            if (
+                shutil.which("pytest")
+                or "pytest"
+                in (repo / "pyproject.toml").read_text(
+                    encoding="utf-8", errors="ignore"
+                )
+                if (repo / "pyproject.toml").exists()
+                else False
+            ):
                 commands.append([sys.executable, "-m", "pytest", "-q"])
             else:
-                commands.append([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"])
+                commands.append(
+                    [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"]
+                )
     if (repo / "Cargo.toml").exists() and shutil.which("cargo"):
         commands.append(["cargo", "test", "--all-targets"])
     if (repo / "go.mod").exists() and shutil.which("go"):
@@ -383,7 +491,9 @@ def infer_build_commands(repo: Path) -> list[list[str]]:
         if (package.get("scripts") or {}).get("build"):
             commands.append(["npm", "run", "build"])
     if (repo / "Dockerfile").exists() and shutil.which("docker"):
-        commands.append(["docker", "build", "-t", f"glaciereq-repair-{repo.name}:verify", "."])
+        commands.append(
+            ["docker", "build", "-t", f"glaciereq-repair-{repo.name}:verify", "."]
+        )
     if (repo / "Makefile").exists() and shutil.which("make"):
         text = (repo / "Makefile").read_text(encoding="utf-8", errors="ignore")
         if re.search(r"(?m)^build\s*:", text) and ["make", "build"] not in commands:
@@ -397,7 +507,14 @@ def test_case_counts(repo: Path) -> tuple[int, int]:
     roots = [p for p in (repo / "tests", repo / "test") if p.is_dir()]
     for root in roots:
         for path in root.rglob("*"):
-            if not path.is_file() or path.suffix not in {".py", ".js", ".ts", ".tsx", ".rs", ".go"}:
+            if not path.is_file() or path.suffix not in {
+                ".py",
+                ".js",
+                ".ts",
+                ".tsx",
+                ".rs",
+                ".go",
+            }:
                 continue
             text = path.read_text(encoding="utf-8", errors="ignore")
             names: list[str] = []
@@ -412,7 +529,9 @@ def test_case_counts(repo: Path) -> tuple[int, int]:
     return behavioral, adversarial
 
 
-def execute_verification(repo: Path, commands: Iterable[list[str]], *, timeout: int = 1200) -> tuple[bool, list[dict]]:
+def execute_verification(
+    repo: Path, commands: Iterable[list[str]], *, timeout: int = 1200
+) -> tuple[bool, list[dict]]:
     records: list[dict] = []
     ok = True
     for command in commands:
@@ -432,7 +551,11 @@ def execute_verification(repo: Path, commands: Iterable[list[str]], *, timeout: 
 
 
 def deployment_mode(repo: Path) -> str | None:
-    if (repo / "Dockerfile").exists() or (repo / "vercel.json").exists() or (repo / "fly.toml").exists():
+    if (
+        (repo / "Dockerfile").exists()
+        or (repo / "vercel.json").exists()
+        or (repo / "fly.toml").exists()
+    ):
         return "deployable-service"
     if (repo / "package.json").exists():
         return "buildable-package-or-app"
@@ -490,19 +613,30 @@ def write_receipts(
             "company-targeted repository names do not imply employer affiliation",
         ],
     }
-    (machine / "implementation-proof.json").write_text(json.dumps(implementation, indent=2) + "\n", encoding="utf-8")
-    (machine / "estate-function-repair-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    (machine / "implementation-proof.json").write_text(
+        json.dumps(implementation, indent=2) + "\n", encoding="utf-8"
+    )
+    (machine / "estate-function-repair-receipt.json").write_text(
+        json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
+    )
 
 
 def create_pr(repo: Path, target: RepoTarget, branch: str) -> str | None:
     result = run(
         [
-            "gh", "pr", "create",
-            "--repo", f"{OWNER}/{target.name}",
-            "--base", target.default_branch,
-            "--head", branch,
-            "--title", "Restore real repository function and deployability",
-            "--body", (
+            "gh",
+            "pr",
+            "create",
+            "--repo",
+            f"{OWNER}/{target.name}",
+            "--base",
+            target.default_branch,
+            "--head",
+            branch,
+            "--title",
+            "Restore real repository function and deployability",
+            "--body",
+            (
                 "Estate function restoration: recovers native purpose, deepens the real central mechanism, "
                 "adds behavioral/adversarial proof, verifies build/deployability, and binds implementation "
                 "proof to the exact repaired source tree. Existing control-plane and governance work is preserved."
@@ -572,7 +706,9 @@ def repair_one(
         test_commands = infer_test_commands(repo)
         if not test_commands:
             blockers.append("no executable native test command discovered")
-        test_ok, test_records = execute_verification(repo, test_commands) if test_commands else (False, [])
+        test_ok, test_records = (
+            execute_verification(repo, test_commands) if test_commands else (False, [])
+        )
         if not test_ok:
             blockers.append("native tests failed")
 
@@ -581,8 +717,14 @@ def repair_one(
             blockers.append("no build/install/deployment surface discovered")
         build_commands = infer_build_commands(repo)
         if not build_commands:
-            blockers.append("no executable build/deploy verification command discovered")
-        build_ok, build_records = execute_verification(repo, build_commands) if build_commands else (False, [])
+            blockers.append(
+                "no executable build/deploy verification command discovered"
+            )
+        build_ok, build_records = (
+            execute_verification(repo, build_commands)
+            if build_commands
+            else (False, [])
+        )
         if not build_ok:
             blockers.append("build/deploy verification failed")
 
@@ -620,7 +762,12 @@ def repair_one(
 
         pr_url = None
         if push:
-            run(["git", "push", "-u", "origin", branch, "--force-with-lease"], cwd=repo, timeout=600, check=True)
+            run(
+                ["git", "push", "-u", "origin", branch, "--force-with-lease"],
+                cwd=repo,
+                timeout=600,
+                check=True,
+            )
             if open_pr:
                 pr_url = create_pr(repo, target, branch)
 
@@ -667,16 +814,25 @@ def save_run(results: list[RepairResult]) -> Path:
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Restore real function across the GlacierEQ native repo estate")
+    p = argparse.ArgumentParser(
+        description="Restore real function across the GlacierEQ native repo estate"
+    )
     p.add_argument("--root", type=Path, default=DEFAULT_ROOT)
-    p.add_argument("--repo", action="append", default=[], help="restrict to one or more repository names")
+    p.add_argument(
+        "--repo",
+        action="append",
+        default=[],
+        help="restrict to one or more repository names",
+    )
     p.add_argument("--priority-file", type=Path)
     p.add_argument("--limit", type=int, default=0, help="0 = all selected native repos")
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--worker-cmd", default=os.environ.get("ESTATE_REPAIR_WORKER_CMD"))
     p.add_argument("--no-push", action="store_true")
     p.add_argument("--no-pr", action="store_true")
-    p.add_argument("--list", action="store_true", help="print live selected estate and exit")
+    p.add_argument(
+        "--list", action="store_true", help="print live selected estate and exit"
+    )
     return p.parse_args(argv)
 
 

@@ -1,4 +1,5 @@
 """Behavioral tests for the GlacierEQ Swarm orchestration core."""
+
 from __future__ import annotations
 
 import copy
@@ -9,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from mechanism import SwarmOrchestrator, TaskStatus, WorkerStatus, run
+from mechanism import SwarmOrchestrator, WorkerStatus, run
 
 
 class TestGlacierEQSwarm(unittest.TestCase):
@@ -38,7 +39,9 @@ class TestGlacierEQSwarm(unittest.TestCase):
         swarm.submit_task("one", ["python"], {})
         swarm.submit_task("two", ["python"], {})
         receipt = swarm.dispatch()
-        assignments = {row["task_id"]: row["worker_id"] for row in receipt["assignments"]}
+        assignments = {
+            row["task_id"]: row["worker_id"] for row in receipt["assignments"]
+        }
         self.assertEqual(assignments, {"one": "a", "two": "b"})
 
     def test_failed_task_requeues_to_alternate_worker(self):

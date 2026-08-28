@@ -7,6 +7,7 @@ submitted to `crystallization_work_unit.py`; archived/forked/disabled repos stay
 explicitly unresolved until lineage/archive resolution is implemented, rather
 than disappearing from scope.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,20 +31,27 @@ OWNER = "GlacierEQ"
 
 
 def run(argv: list[str], *, timeout: int = 300) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(argv, capture_output=True, text=True, timeout=timeout, check=False)
+    return subprocess.run(
+        argv, capture_output=True, text=True, timeout=timeout, check=False
+    )
 
 
 def discover_owned_repositories() -> list[dict[str, Any]]:
     """Enumerate every repo owned by the authenticated account, including private."""
     proc = run(
         [
-            "gh", "api", "--paginate", "--slurp",
+            "gh",
+            "api",
+            "--paginate",
+            "--slurp",
             "/user/repos?affiliation=owner&per_page=100&sort=full_name&direction=asc",
         ],
         timeout=600,
     )
     if proc.returncode != 0:
-        raise RuntimeError("github_inventory_failed:" + (proc.stderr or proc.stdout)[-2000:])
+        raise RuntimeError(
+            "github_inventory_failed:" + (proc.stderr or proc.stdout)[-2000:]
+        )
     pages = json.loads(proc.stdout)
     if not isinstance(pages, list):
         raise ValueError("github_inventory_response_invalid")
@@ -57,7 +65,11 @@ def discover_owned_repositories() -> list[dict[str, Any]]:
     seen: set[str] = set()
     for raw in raw_rows:
         full_name = raw.get("full_name")
-        owner = ((raw.get("owner") or {}).get("login") if isinstance(raw.get("owner"), dict) else None)
+        owner = (
+            (raw.get("owner") or {}).get("login")
+            if isinstance(raw.get("owner"), dict)
+            else None
+        )
         if not isinstance(full_name, str) or not full_name.startswith(OWNER + "/"):
             continue
         if owner != OWNER:
@@ -71,11 +83,16 @@ def discover_owned_repositories() -> list[dict[str, Any]]:
                 "name": raw.get("name"),
                 "default_branch": raw.get("default_branch") or "main",
                 "private": bool(raw.get("private")),
-                "visibility": raw.get("visibility") or ("private" if raw.get("private") else "public"),
+                "visibility": raw.get("visibility")
+                or ("private" if raw.get("private") else "public"),
                 "archived": bool(raw.get("archived")),
                 "disabled": bool(raw.get("disabled")),
                 "fork": bool(raw.get("fork")),
-                "fork_parent": ((raw.get("parent") or {}).get("full_name") if isinstance(raw.get("parent"), dict) else None),
+                "fork_parent": (
+                    (raw.get("parent") or {}).get("full_name")
+                    if isinstance(raw.get("parent"), dict)
+                    else None
+                ),
                 "description": raw.get("description") or "",
                 "language": raw.get("language"),
                 "topics": raw.get("topics") or [],
@@ -118,8 +135,14 @@ def configured_workers(count: int, *, cwd: Path) -> list[ConfiguredWorker]:
             worker_id=worker_id,
             argv=command,
             cwd=cwd,
-            timeout_seconds=int(os.environ.get("CRYSTALLIZATION_WORK_UNIT_TIMEOUT", "10800")),
-            max_output_bytes=int(os.environ.get("CRYSTALLIZATION_WORK_UNIT_MAX_OUTPUT", str(16 * 1024 * 1024))),
+            timeout_seconds=int(
+                os.environ.get("CRYSTALLIZATION_WORK_UNIT_TIMEOUT", "10800")
+            ),
+            max_output_bytes=int(
+                os.environ.get(
+                    "CRYSTALLIZATION_WORK_UNIT_MAX_OUTPUT", str(16 * 1024 * 1024)
+                )
+            ),
         )
         workers.append(
             ConfiguredWorker(
@@ -140,7 +163,10 @@ def sync_results_to_ledger(runtime: SwarmRuntime, ledger: CrystallizationLedger)
     recorded = 0
     for row in runtime.orchestrator.snapshot()["tasks"]:
         task_id_value = row["task_id"]
-        if not task_id_value.startswith("crystallize::") or row["status"] != "SUCCEEDED":
+        if (
+            not task_id_value.startswith("crystallize::")
+            or row["status"] != "SUCCEEDED"
+        ):
             continue
         stored = runtime.store.get_task_result(task_id_value)
         result = stored["result"]
@@ -148,7 +174,9 @@ def sync_results_to_ledger(runtime: SwarmRuntime, ledger: CrystallizationLedger)
             raise ValueError(f"crystallization_result_invalid:{task_id_value}")
         repository = result.get("repository")
         if not isinstance(repository, str):
-            raise ValueError(f"crystallization_result_repository_missing:{task_id_value}")
+            raise ValueError(
+                f"crystallization_result_repository_missing:{task_id_value}"
+            )
         match = re.search(r"::g(\d+)$", task_id_value)
         if not match:
             raise ValueError(f"crystallization_task_generation_invalid:{task_id_value}")
@@ -158,7 +186,9 @@ def sync_results_to_ledger(runtime: SwarmRuntime, ledger: CrystallizationLedger)
     return recorded
 
 
-def should_submit(metadata: Mapping[str, Any], latest: Mapping[str, Any] | None) -> tuple[bool, str]:
+def should_submit(
+    metadata: Mapping[str, Any], latest: Mapping[str, Any] | None
+) -> tuple[bool, str]:
     if metadata.get("archived"):
         return False, "ARCHIVE_RESOLUTION_REQUIRED"
     if metadata.get("fork"):
@@ -228,17 +258,41 @@ def write_ledger_snapshot(ledger: CrystallizationLedger, path: Path) -> dict[str
     value = ledger.current_ledger()
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(path.name + ".tmp")
-    temp.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temp.write_text(
+        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     os.replace(temp, path)
     return value
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Dispatch the entire GlacierEQ repository estate through CRYSTALLIZATION-MANDATE Swarm workers")
-    parser.add_argument("--state-root", type=Path, default=Path(os.environ.get("CRYSTALLIZATION_STATE_ROOT", "/data/crystallization")))
-    parser.add_argument("--workers", type=int, default=int(os.environ.get("CRYSTALLIZATION_SWARM_WORKERS", "4")))
-    parser.add_argument("--rounds", type=int, default=1, help="number of implementation generations to execute this invocation")
-    parser.add_argument("--max-new-tasks", type=int, default=0, help="0 = every eligible repository in each round")
+    parser = argparse.ArgumentParser(
+        description="Dispatch the entire GlacierEQ repository estate through CRYSTALLIZATION-MANDATE Swarm workers"
+    )
+    parser.add_argument(
+        "--state-root",
+        type=Path,
+        default=Path(
+            os.environ.get("CRYSTALLIZATION_STATE_ROOT", "/data/crystallization")
+        ),
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=int(os.environ.get("CRYSTALLIZATION_SWARM_WORKERS", "4")),
+    )
+    parser.add_argument(
+        "--rounds",
+        type=int,
+        default=1,
+        help="number of implementation generations to execute this invocation",
+    )
+    parser.add_argument(
+        "--max-new-tasks",
+        type=int,
+        default=0,
+        help="0 = every eligible repository in each round",
+    )
     parser.add_argument("--include", action="append", default=[])
     parser.add_argument("--exclude", action="append", default=[])
     parser.add_argument("--no-push", action="store_true")
@@ -260,13 +314,18 @@ def main() -> int:
 
     if args.inventory_only:
         current = write_ledger_snapshot(ledger, snapshot_path)
-        print(json.dumps({
-            "inventory_generation": inventory_generation,
-            "repository_count": len(inventory),
-            "estate_complete": current["estate_complete"],
-            "ledger_digest": current["ledger_digest"],
-            "ledger_path": str(snapshot_path),
-        }, sort_keys=True))
+        print(
+            json.dumps(
+                {
+                    "inventory_generation": inventory_generation,
+                    "repository_count": len(inventory),
+                    "estate_complete": current["estate_complete"],
+                    "ledger_digest": current["ledger_digest"],
+                    "ledger_path": str(snapshot_path),
+                },
+                sort_keys=True,
+            )
+        )
         return 0 if current["estate_complete"] else 2
 
     runtime = SwarmRuntime(
@@ -328,7 +387,10 @@ def main() -> int:
         "ledger_path": str(snapshot_path),
     }
     print(json.dumps(report, sort_keys=True))
-    if report["swarm_store_integrity"]["status"] != "PASS" or report["ledger_integrity"]["status"] != "PASS":
+    if (
+        report["swarm_store_integrity"]["status"] != "PASS"
+        or report["ledger_integrity"]["status"] != "PASS"
+    ):
         return 3
     return 0 if final["estate_complete"] else 2
 

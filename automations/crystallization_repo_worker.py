@@ -11,6 +11,7 @@ repository work unit:
 The implementation agent is operator-configured via
 `CRYSTALLIZATION_IMPLEMENTER_CMD`; task submitters cannot replace that command.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -18,10 +19,8 @@ import json
 import os
 import re
 import shlex
-import shutil
 import subprocess
 import sys
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -41,7 +40,13 @@ def _digest(value: Any) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()
 
 
-def run(argv: Sequence[str], *, cwd: Path | None = None, timeout: int = 1800, input_text: str | None = None) -> dict[str, Any]:
+def run(
+    argv: Sequence[str],
+    *,
+    cwd: Path | None = None,
+    timeout: int = 1800,
+    input_text: str | None = None,
+) -> dict[str, Any]:
     proc = subprocess.run(
         list(argv),
         cwd=str(cwd) if cwd else None,
@@ -126,7 +131,9 @@ def validate_crystallization_model(repo: Path) -> dict[str, Any]:
     purpose = load_json(root / "purpose-manifest.json", "purpose_manifest")
     capabilities = load_json(root / "capability-manifest.json", "capability_manifest")
     gaps = load_json(root / "gap-matrix.json", "gap_matrix")
-    plan = validate_execution_plan(load_json(root / "execution-plan.json", "execution_plan"))
+    plan = validate_execution_plan(
+        load_json(root / "execution-plan.json", "execution_plan")
+    )
 
     for key in ("purpose", "problem", "intended_outcome", "system_kind"):
         if not isinstance(purpose.get(key), str) or not purpose[key].strip():
@@ -152,7 +159,14 @@ def validate_crystallization_model(repo: Path) -> dict[str, Any]:
         ids.add(cap_id)
         if not isinstance(material, bool):
             raise ValueError(f"capability_material_invalid:{cap_id}")
-        if state not in {"WORKING", "PARTIAL", "BROKEN", "MISSING", "UNKNOWN", "OBSOLETE"}:
+        if state not in {
+            "WORKING",
+            "PARTIAL",
+            "BROKEN",
+            "MISSING",
+            "UNKNOWN",
+            "OBSOLETE",
+        }:
             raise ValueError(f"capability_state_invalid:{cap_id}")
         if material:
             material_count += 1
@@ -174,7 +188,9 @@ def validate_crystallization_model(repo: Path) -> dict[str, Any]:
         gap_ids.add(cap_id)
     expected_gaps = {row["id"] for row in open_material}
     if gap_ids != expected_gaps:
-        raise ValueError(f"gap_matrix_mismatch:expected={sorted(expected_gaps)}:actual={sorted(gap_ids)}")
+        raise ValueError(
+            f"gap_matrix_mismatch:expected={sorted(expected_gaps)}:actual={sorted(gap_ids)}"
+        )
 
     return {
         "purpose": purpose,
@@ -188,7 +204,9 @@ def validate_crystallization_model(repo: Path) -> dict[str, Any]:
     }
 
 
-def execute_commands(repo: Path, commands: Iterable[list[str]], label: str) -> tuple[bool, list[dict[str, Any]]]:
+def execute_commands(
+    repo: Path, commands: Iterable[list[str]], label: str
+) -> tuple[bool, list[dict[str, Any]]]:
     receipts: list[dict[str, Any]] = []
     okay = True
     for argv in commands:
@@ -196,8 +214,12 @@ def execute_commands(repo: Path, commands: Iterable[list[str]], label: str) -> t
         receipt = {
             "argv": argv,
             "returncode": result["returncode"],
-            "stdout_sha256": hashlib.sha256(result["stdout"].encode("utf-8")).hexdigest(),
-            "stderr_sha256": hashlib.sha256(result["stderr"].encode("utf-8")).hexdigest(),
+            "stdout_sha256": hashlib.sha256(
+                result["stdout"].encode("utf-8")
+            ).hexdigest(),
+            "stderr_sha256": hashlib.sha256(
+                result["stderr"].encode("utf-8")
+            ).hexdigest(),
             "stdout_tail": result["stdout"][-2000:],
             "stderr_tail": result["stderr"][-2000:],
         }
@@ -214,8 +236,14 @@ def deployment_proof(repo: Path, required: bool) -> tuple[str, dict[str, Any] | 
         return "NOT_APPLICABLE", None
     receipt = load_json(path, "deployment_receipt")
     required_fields = (
-        "result", "target", "endpoint_or_artifact", "smoke_command",
-        "smoke_returncode", "health", "readiness", "logs_or_run_ref",
+        "result",
+        "target",
+        "endpoint_or_artifact",
+        "smoke_command",
+        "smoke_returncode",
+        "health",
+        "readiness",
+        "logs_or_run_ref",
         "rollback_mechanism",
     )
     for key in required_fields:
@@ -228,7 +256,9 @@ def deployment_proof(repo: Path, required: bool) -> tuple[str, dict[str, Any] | 
     return "PASS", receipt
 
 
-def ensure_checkout(repository: str, default_branch: str, root: Path) -> tuple[Path, str]:
+def ensure_checkout(
+    repository: str, default_branch: str, root: Path
+) -> tuple[Path, str]:
     name = repository.split("/", 1)[1]
     repo = root / name
     root.mkdir(parents=True, exist_ok=True)
@@ -239,17 +269,31 @@ def ensure_checkout(repository: str, default_branch: str, root: Path) -> tuple[P
         require_success(dirty, "git_status")
         if dirty["stdout"].strip():
             raise RuntimeError("workspace_dirty_refusing_to_overwrite")
-        require_success(run(["git", "fetch", "origin", "--prune"], cwd=repo), "git_fetch")
+        require_success(
+            run(["git", "fetch", "origin", "--prune"], cwd=repo), "git_fetch"
+        )
     else:
-        require_success(run(["gh", "repo", "clone", repository, str(repo)], timeout=900), "gh_clone")
-    require_success(run(["git", "checkout", default_branch], cwd=repo), "git_checkout_default")
-    require_success(run(["git", "reset", "--hard", f"origin/{default_branch}"], cwd=repo), "git_reset_default")
+        require_success(
+            run(["gh", "repo", "clone", repository, str(repo)], timeout=900), "gh_clone"
+        )
+    require_success(
+        run(["git", "checkout", default_branch], cwd=repo), "git_checkout_default"
+    )
+    require_success(
+        run(["git", "reset", "--hard", f"origin/{default_branch}"], cwd=repo),
+        "git_reset_default",
+    )
     branch = safe_branch(repository)
     existing = run(["git", "branch", "--list", branch], cwd=repo)
     require_success(existing, "git_branch_list")
     if existing["stdout"].strip():
-        require_success(run(["git", "branch", "-D", branch], cwd=repo), "git_branch_delete_local")
-    require_success(run(["git", "checkout", "-b", branch, f"origin/{default_branch}"], cwd=repo), "git_checkout_crystallize")
+        require_success(
+            run(["git", "branch", "-D", branch], cwd=repo), "git_branch_delete_local"
+        )
+    require_success(
+        run(["git", "checkout", "-b", branch, f"origin/{default_branch}"], cwd=repo),
+        "git_checkout_crystallize",
+    )
     return repo, branch
 
 
@@ -299,17 +343,45 @@ def invoke_implementer(repo: Path, repository: str) -> dict[str, Any]:
     prompt = implementer_prompt(repository)
     # The prompt is appended as one argv value. The operator chooses a command
     # that accepts its instruction as the final positional argument.
-    return run([*argv, prompt], cwd=repo, timeout=int(os.environ.get("CRYSTALLIZATION_IMPLEMENTER_TIMEOUT", "7200")))
+    return run(
+        [*argv, prompt],
+        cwd=repo,
+        timeout=int(os.environ.get("CRYSTALLIZATION_IMPLEMENTER_TIMEOUT", "7200")),
+    )
 
 
 def commit_functional_delta(repo: Path) -> str:
     status = run(["git", "status", "--porcelain"], cwd=repo)
     require_success(status, "git_status_after_implementation")
     if status["stdout"].strip():
-        run(["git", "config", "user.name", os.environ.get("CRYSTALLIZATION_GIT_NAME", "GlacierEQ Crystallization")], cwd=repo)
-        run(["git", "config", "user.email", os.environ.get("CRYSTALLIZATION_GIT_EMAIL", "crystallization@local.invalid")], cwd=repo)
+        run(
+            [
+                "git",
+                "config",
+                "user.name",
+                os.environ.get("CRYSTALLIZATION_GIT_NAME", "GlacierEQ Crystallization"),
+            ],
+            cwd=repo,
+        )
+        run(
+            [
+                "git",
+                "config",
+                "user.email",
+                os.environ.get(
+                    "CRYSTALLIZATION_GIT_EMAIL", "crystallization@local.invalid"
+                ),
+            ],
+            cwd=repo,
+        )
         require_success(run(["git", "add", "-A"], cwd=repo), "git_add")
-        require_success(run(["git", "commit", "-m", "crystallize: complete repository purpose"], cwd=repo), "git_commit_functional")
+        require_success(
+            run(
+                ["git", "commit", "-m", "crystallize: complete repository purpose"],
+                cwd=repo,
+            ),
+            "git_commit_functional",
+        )
     head = run(["git", "rev-parse", "HEAD"], cwd=repo)
     require_success(head, "git_rev_parse")
     value = head["stdout"].strip()
@@ -347,25 +419,49 @@ def write_completion_receipt(
             "machine/crystallization/purpose-manifest.json",
             "machine/crystallization/capability-manifest.json",
             "machine/crystallization/gap-matrix.json",
-            "machine/crystallization/execution-plan.json"
+            "machine/crystallization/execution-plan.json",
         ],
         "final_status": "CRYSTALLIZED",
         "terminal_truth": True,
         "verified_at": _now(),
     }
     path = root / "completion-receipt.json"
-    path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    require_success(run(["git", "add", path.relative_to(repo).as_posix()], cwd=repo), "git_add_receipt")
-    require_success(run(["git", "commit", "-m", "crystallize: bind completion receipt"], cwd=repo), "git_commit_receipt")
+    path.write_text(
+        json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    require_success(
+        run(["git", "add", path.relative_to(repo).as_posix()], cwd=repo),
+        "git_add_receipt",
+    )
+    require_success(
+        run(["git", "commit", "-m", "crystallize: bind completion receipt"], cwd=repo),
+        "git_commit_receipt",
+    )
     head = run(["git", "rev-parse", "HEAD"], cwd=repo)
     require_success(head, "git_receipt_head")
     return head["stdout"].strip()
 
 
-def maybe_push_and_pr(repo: Path, repository: str, branch: str, default_branch: str, *, push: bool, open_pr: bool, status: str) -> str | None:
+def maybe_push_and_pr(
+    repo: Path,
+    repository: str,
+    branch: str,
+    default_branch: str,
+    *,
+    push: bool,
+    open_pr: bool,
+    status: str,
+) -> str | None:
     if not push:
         return None
-    require_success(run(["git", "push", "-u", "origin", branch, "--force-with-lease"], cwd=repo, timeout=900), "git_push")
+    require_success(
+        run(
+            ["git", "push", "-u", "origin", branch, "--force-with-lease"],
+            cwd=repo,
+            timeout=900,
+        ),
+        "git_push",
+    )
     if not open_pr:
         return None
     title = f"CRYSTALLIZATION: {repository.split('/', 1)[1]} — {status}"
@@ -373,16 +469,47 @@ def maybe_push_and_pr(repo: Path, repository: str, branch: str, default_branch: 
         "CRYSTALLIZATION-MANDATE work unit. Purpose/capability/gap manifests are the authority. "
         f"Current status: **{status}**. No unresolved material gap is hidden by CI or documentation."
     )
-    result = run([
-        "gh", "pr", "create", "--repo", repository, "--base", default_branch,
-        "--head", branch, "--title", title, "--body", body,
-    ], cwd=repo, timeout=180)
+    result = run(
+        [
+            "gh",
+            "pr",
+            "create",
+            "--repo",
+            repository,
+            "--base",
+            default_branch,
+            "--head",
+            branch,
+            "--title",
+            title,
+            "--body",
+            body,
+        ],
+        cwd=repo,
+        timeout=180,
+    )
     if result["returncode"] != 0:
         # Existing PR is not a repository failure; return a discoverable lookup.
-        lookup = run(["gh", "pr", "view", branch, "--repo", repository, "--json", "url", "--jq", ".url"], cwd=repo)
+        lookup = run(
+            [
+                "gh",
+                "pr",
+                "view",
+                branch,
+                "--repo",
+                repository,
+                "--json",
+                "url",
+                "--jq",
+                ".url",
+            ],
+            cwd=repo,
+        )
         if lookup["returncode"] == 0:
             return lookup["stdout"].strip() or None
-        raise RuntimeError("pr_create_failed:" + (result["stderr"] or result["stdout"])[-1000:])
+        raise RuntimeError(
+            "pr_create_failed:" + (result["stderr"] or result["stdout"])[-1000:]
+        )
     return result["stdout"].strip() or None
 
 
@@ -391,7 +518,9 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
     default_branch = payload.get("default_branch", "main")
     if not isinstance(default_branch, str) or not default_branch.strip():
         raise ValueError("default_branch_invalid")
-    root = Path(os.environ.get("CRYSTALLIZATION_WORKSPACE_ROOT", "/data/crystallization-repos")).resolve()
+    root = Path(
+        os.environ.get("CRYSTALLIZATION_WORKSPACE_ROOT", "/data/crystallization-repos")
+    ).resolve()
     push = bool(payload.get("push", True))
     open_pr = bool(payload.get("open_pr", True))
     repo, branch = ensure_checkout(repository, default_branch, root)
@@ -411,7 +540,9 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
     plan = model["plan"]
     test_ok, test_receipts = execute_commands(repo, plan["test_commands"], "test")
     build_ok, build_receipts = execute_commands(repo, plan["build_commands"], "build")
-    runtime_ok, runtime_receipts = execute_commands(repo, plan["runtime_commands"], "runtime")
+    runtime_ok, runtime_receipts = execute_commands(
+        repo, plan["runtime_commands"], "runtime"
+    )
     deploy_result, deploy_receipt = deployment_proof(repo, plan["naturally_deployable"])
 
     proof = {
@@ -421,13 +552,15 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
         "tests": test_receipts,
         "build": build_receipts,
         "runtime": runtime_receipts,
-        "proof_digest": _digest({
-            "source_sha": source_sha,
-            "tests": test_receipts,
-            "build": build_receipts,
-            "runtime": runtime_receipts,
-            "deployment": deploy_receipt,
-        }),
+        "proof_digest": _digest(
+            {
+                "source_sha": source_sha,
+                "tests": test_receipts,
+                "build": build_receipts,
+                "runtime": runtime_receipts,
+                "deployment": deploy_receipt,
+            }
+        ),
     }
 
     open_gaps = model["open_material_capabilities"]
@@ -442,11 +575,18 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
 
     receipt_head = None
     if status == "CRYSTALLIZED":
-        receipt_head = write_completion_receipt(repo, repository, model, source_sha, proof, deploy_result)
+        receipt_head = write_completion_receipt(
+            repo, repository, model, source_sha, proof, deploy_result
+        )
 
     pr_url = maybe_push_and_pr(
-        repo, repository, branch, default_branch,
-        push=push, open_pr=open_pr, status=status,
+        repo,
+        repository,
+        branch,
+        default_branch,
+        push=push,
+        open_pr=open_pr,
+        status=status,
     )
     return {
         "repository": repository,
@@ -474,7 +614,12 @@ def main() -> int:
         print(json.dumps(result, sort_keys=True))
         return 0 if result["status"] in TERMINAL_STATES else 2
     except Exception as exc:
-        print(json.dumps({"status": "ERROR", "reason": f"{type(exc).__name__}:{exc}"}, sort_keys=True))
+        print(
+            json.dumps(
+                {"status": "ERROR", "reason": f"{type(exc).__name__}:{exc}"},
+                sort_keys=True,
+            )
+        )
         return 3
 
 

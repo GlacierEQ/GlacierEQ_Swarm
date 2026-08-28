@@ -5,6 +5,7 @@ Workers and their fixed executable adapters are operator-configured at service
 startup. API clients may submit JSON task payloads and required capabilities;
 they cannot replace the worker command.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -28,7 +29,9 @@ MAX_REQUEST_BYTES = 2 * 1024 * 1024
 class SwarmHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
 
-    def __init__(self, address, handler, *, runtime: SwarmRuntime, bearer_token: str) -> None:
+    def __init__(
+        self, address, handler, *, runtime: SwarmRuntime, bearer_token: str
+    ) -> None:
         super().__init__(address, handler)
         self.runtime = runtime
         self.bearer_token = bearer_token
@@ -41,7 +44,10 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("swarm-api " + (format % args) + "\n")
 
     def _json(self, status: int, value: Any) -> None:
-        data = (json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+        data = (
+            json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+            + "\n"
+        ).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(data)))
@@ -84,7 +90,12 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path == "/ready":
                 readiness = self.server.runtime.readiness()
-                self._json(HTTPStatus.OK if readiness["ready"] else HTTPStatus.SERVICE_UNAVAILABLE, readiness)
+                self._json(
+                    HTTPStatus.OK
+                    if readiness["ready"]
+                    else HTTPStatus.SERVICE_UNAVAILABLE,
+                    readiness,
+                )
                 return
             if not self._require_auth():
                 return
@@ -102,7 +113,10 @@ class Handler(BaseHTTPRequestHandler):
         except KeyError as exc:
             self._json(HTTPStatus.NOT_FOUND, {"error": str(exc)})
         except Exception as exc:
-            self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"{type(exc).__name__}:{exc}"})
+            self._json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": f"{type(exc).__name__}:{exc}"},
+            )
 
     def do_POST(self) -> None:
         path = urlparse(self.path).path
@@ -126,11 +140,15 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path == "/v1/run":
                 limit = body.get("limit")
-                result = self.server.runtime.run_once(limit=None if limit is None else int(limit))
+                result = self.server.runtime.run_once(
+                    limit=None if limit is None else int(limit)
+                )
                 self._json(HTTPStatus.OK, result)
                 return
             if path == "/v1/run-until-idle":
-                result = self.server.runtime.run_until_idle(max_cycles=int(body.get("max_cycles", 1000)))
+                result = self.server.runtime.run_until_idle(
+                    max_cycles=int(body.get("max_cycles", 1000))
+                )
                 self._json(HTTPStatus.OK, result)
                 return
             self._json(HTTPStatus.NOT_FOUND, {"error": "not_found"})
@@ -139,7 +157,10 @@ class Handler(BaseHTTPRequestHandler):
         except KeyError as exc:
             self._json(HTTPStatus.NOT_FOUND, {"error": str(exc)})
         except Exception as exc:
-            self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"{type(exc).__name__}:{exc}"})
+            self._json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": f"{type(exc).__name__}:{exc}"},
+            )
 
 
 def _load_config(path: Path) -> dict[str, Any]:
@@ -149,7 +170,9 @@ def _load_config(path: Path) -> dict[str, Any]:
     return payload
 
 
-def serve(config_path: str | Path, *, host: str | None = None, port: int | None = None) -> None:
+def serve(
+    config_path: str | Path, *, host: str | None = None, port: int | None = None
+) -> None:
     path = Path(config_path).resolve()
     config = _load_config(path)
     token_env = config.get("bearer_token_env", "GLACIEREQ_SWARM_TOKEN")
@@ -161,7 +184,9 @@ def serve(config_path: str | Path, *, host: str | None = None, port: int | None 
     runtime = SwarmRuntime.from_config(config, config_base=path.parent)
     bind_host = host if host is not None else str(config.get("host", "127.0.0.1"))
     bind_port = port if port is not None else int(config.get("port", 8787))
-    server = SwarmHTTPServer((bind_host, bind_port), Handler, runtime=runtime, bearer_token=token)
+    server = SwarmHTTPServer(
+        (bind_host, bind_port), Handler, runtime=runtime, bearer_token=token
+    )
     shutting_down = threading.Event()
 
     def shutdown(_signum, _frame) -> None:
@@ -180,7 +205,9 @@ def serve(config_path: str | Path, *, host: str | None = None, port: int | None 
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Serve the persistent GlacierEQ Swarm API")
+    parser = argparse.ArgumentParser(
+        description="Serve the persistent GlacierEQ Swarm API"
+    )
     parser.add_argument("config", type=Path)
     parser.add_argument("--host")
     parser.add_argument("--port", type=int)
@@ -189,7 +216,9 @@ def main(argv: list[str] | None = None) -> int:
         serve(args.config, host=args.host, port=args.port)
         return 0
     except (OSError, TypeError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
-        sys.stderr.write(json.dumps({"status": "ERROR", "reason": str(exc)}, sort_keys=True) + "\n")
+        sys.stderr.write(
+            json.dumps({"status": "ERROR", "reason": str(exc)}, sort_keys=True) + "\n"
+        )
         return 2
 
 

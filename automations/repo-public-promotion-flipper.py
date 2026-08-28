@@ -14,6 +14,7 @@ visibility/lifecycle decision by itself.
 Default mode is read-only inventory. Visibility changes occur only through an explicit
 CLI action. AKOS compatibility metadata is optional and never a promotion gate.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -192,12 +193,19 @@ def scan_tree_for_secrets(repo: str, max_files: int = 60) -> list[str]:
         if row.get("type") != "blob" or path.startswith(".git"):
             continue
         lowered = path.lower()
-        if any(lowered.endswith(ext) for ext in (".png", ".jpg", ".jpeg", ".pdf", ".zip", ".lock")):
+        if any(
+            lowered.endswith(ext)
+            for ext in (".png", ".jpg", ".jpeg", ".pdf", ".zip", ".lock")
+        ):
             continue
         score = 0
-        if any(x in lowered for x in (".env", "secret", "credential", "token", "config")):
+        if any(
+            x in lowered for x in (".env", "secret", "credential", "token", "config")
+        ):
             score += 10
-        if lowered.endswith((".py", ".ts", ".js", ".md", ".json", ".toml", ".yml", ".yaml", ".sh")):
+        if lowered.endswith(
+            (".py", ".ts", ".js", ".md", ".json", ".toml", ".yml", ".yaml", ".sh")
+        ):
             score += 3
         ranked.append((score, path))
 
@@ -285,7 +293,12 @@ def promote(name: str, force: bool = False) -> dict[str, Any]:
     """Execute an explicit public-visibility request for a non-sensitive repository."""
     report = evaluate_repo(name)
     if not report.get("observed"):
-        return {"name": name, "promoted": False, "reason": "repository_unavailable", "eval": report}
+        return {
+            "name": name,
+            "promoted": False,
+            "reason": "repository_unavailable",
+            "eval": report,
+        }
     if report["readiness"]["sensitive_content_risk_hint"]:
         return {
             "name": name,
@@ -303,7 +316,12 @@ def promote(name: str, force: bool = False) -> dict[str, Any]:
             "force_ignored": bool(force),
         }
     if not report["public_readiness"] and not force:
-        return {"name": name, "promoted": False, "reason": "readiness_checks_failed", "eval": report}
+        return {
+            "name": name,
+            "promoted": False,
+            "reason": "readiness_checks_failed",
+            "eval": report,
+        }
 
     status, output = api("PATCH", f"/repos/{OWNER}/{name}", {"private": False})
     ok = status in (200, 201) and output.get("private") is False
@@ -337,7 +355,10 @@ def lock_sensitive_all() -> dict[str, Any]:
     page = 1
     repos: list[dict[str, Any]] = []
     while page <= 40:
-        status, batch = api("GET", f"/user/repos?per_page=100&page={page}&affiliation=owner&sort=full_name")
+        status, batch = api(
+            "GET",
+            f"/user/repos?per_page=100&page={page}&affiliation=owner&sort=full_name",
+        )
         if status != 200 or not batch:
             break
         repos.extend(batch)
@@ -364,7 +385,9 @@ def lock_sensitive_all() -> dict[str, Any]:
         "results": results,
     }
     SENSITIVE_ACTION_LOG.parent.mkdir(parents=True, exist_ok=True)
-    SENSITIVE_ACTION_LOG.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    SENSITIVE_ACTION_LOG.write_text(
+        json.dumps(payload, indent=2) + "\n", encoding="utf-8"
+    )
     return payload
 
 
@@ -423,14 +446,42 @@ def write_policy() -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Repository visibility readiness and explicit action tool")
-    parser.add_argument("--scan", metavar="REPO", help="Read-only evaluation of one repository")
-    parser.add_argument("--promote", metavar="REPO", help="Explicitly make one non-sensitive repository public if safety checks pass")
-    parser.add_argument("--force", action="store_true", help="Override non-security readiness gaps; never overrides secret or sensitive-data safety")
-    parser.add_argument("--pack", metavar="REPO", help="Write optional non-authoritative AKOS compatibility bridge only")
-    parser.add_argument("--reprivatize-portfolio", action="store_true", help="Explicitly set the current portfolio list private")
-    parser.add_argument("--lock-legal", action="store_true", help="Compatibility alias: explicitly set repositories matching the sensitive-risk selector private")
-    parser.add_argument("--dry-run-all", action="store_true", help="Read-only evaluation of current portfolio list")
+    parser = argparse.ArgumentParser(
+        description="Repository visibility readiness and explicit action tool"
+    )
+    parser.add_argument(
+        "--scan", metavar="REPO", help="Read-only evaluation of one repository"
+    )
+    parser.add_argument(
+        "--promote",
+        metavar="REPO",
+        help="Explicitly make one non-sensitive repository public if safety checks pass",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Override non-security readiness gaps; never overrides secret or sensitive-data safety",
+    )
+    parser.add_argument(
+        "--pack",
+        metavar="REPO",
+        help="Write optional non-authoritative AKOS compatibility bridge only",
+    )
+    parser.add_argument(
+        "--reprivatize-portfolio",
+        action="store_true",
+        help="Explicitly set the current portfolio list private",
+    )
+    parser.add_argument(
+        "--lock-legal",
+        action="store_true",
+        help="Compatibility alias: explicitly set repositories matching the sensitive-risk selector private",
+    )
+    parser.add_argument(
+        "--dry-run-all",
+        action="store_true",
+        help="Read-only evaluation of current portfolio list",
+    )
     args = parser.parse_args(argv)
 
     write_policy()
@@ -442,13 +493,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.scan:
         report.update({"mode": "scan", "result": evaluate_repo(args.scan)})
     elif args.pack:
-        report.update({"mode": "compatibility_pack", "result": compatibility_pack(args.pack)})
+        report.update(
+            {"mode": "compatibility_pack", "result": compatibility_pack(args.pack)}
+        )
     elif args.promote:
-        report.update({"mode": "explicit_promote", "result": promote(args.promote, force=args.force)})
+        report.update(
+            {
+                "mode": "explicit_promote",
+                "result": promote(args.promote, force=args.force),
+            }
+        )
     elif args.reprivatize_portfolio:
-        report.update({"mode": "explicit_reprivatize", "result": reprivatize_portfolio()})
+        report.update(
+            {"mode": "explicit_reprivatize", "result": reprivatize_portfolio()}
+        )
     elif args.lock_legal:
-        report.update({"mode": "explicit_sensitive_set_private", "result": lock_sensitive_all()})
+        report.update(
+            {"mode": "explicit_sensitive_set_private", "result": lock_sensitive_all()}
+        )
     else:
         names = portfolio_list_from_state()
         evals = []
@@ -462,7 +524,9 @@ def main(argv: list[str] | None = None) -> int:
             {
                 "mode": "dry_run_all",
                 "portfolio_count": len(names),
-                "public_ready": [row["name"] for row in evals if row.get("public_readiness")],
+                "public_ready": [
+                    row["name"] for row in evals if row.get("public_readiness")
+                ],
                 "evals": evals,
             }
         )

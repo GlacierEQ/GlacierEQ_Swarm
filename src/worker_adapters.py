@@ -6,6 +6,7 @@ as JSON on stdin.  This prevents a remote task from silently replacing the
 worker command while still allowing arbitrary purpose-specific worker programs
 behind an explicit capability grant.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -74,8 +75,7 @@ class WorkerExecutionReceipt:
 class WorkerAdapter(Protocol):
     worker_id: str
 
-    def execute(self, payload: Any) -> WorkerExecutionReceipt:
-        ...
+    def execute(self, payload: Any) -> WorkerExecutionReceipt: ...
 
 
 class SubprocessWorkerAdapter:
@@ -100,18 +100,27 @@ class SubprocessWorkerAdapter:
         self.cwd = Path(cwd).resolve()
         if not self.cwd.is_dir():
             raise ValueError("adapter_cwd_missing")
-        if not isinstance(timeout_seconds, int) or isinstance(timeout_seconds, bool) or timeout_seconds <= 0:
+        if (
+            not isinstance(timeout_seconds, int)
+            or isinstance(timeout_seconds, bool)
+            or timeout_seconds <= 0
+        ):
             raise ValueError("adapter_timeout_invalid")
         if not isinstance(max_output_bytes, int) or max_output_bytes <= 0:
             raise ValueError("adapter_output_limit_invalid")
         self.timeout_seconds = timeout_seconds
         self.max_output_bytes = max_output_bytes
         self.env = dict(env or {})
-        if not all(isinstance(k, str) and k and isinstance(v, str) for k, v in self.env.items()):
+        if not all(
+            isinstance(k, str) and k and isinstance(v, str) for k, v in self.env.items()
+        ):
             raise ValueError("adapter_env_invalid")
 
     def execute(self, payload: Any) -> WorkerExecutionReceipt:
-        input_bytes = (json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+        input_bytes = (
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
+            + "\n"
+        ).encode("utf-8")
         input_digest = _sha(input_bytes)
         merged_env = os.environ.copy()
         merged_env.update(self.env)
@@ -138,7 +147,9 @@ class SubprocessWorkerAdapter:
             returncode = 124
         if len(stdout) > self.max_output_bytes or len(stderr) > self.max_output_bytes:
             returncode = 125
-            stderr = (stderr[: self.max_output_bytes] + b"\nworker_output_limit_exceeded\n")[: self.max_output_bytes]
+            stderr = (
+                stderr[: self.max_output_bytes] + b"\nworker_output_limit_exceeded\n"
+            )[: self.max_output_bytes]
             stdout = stdout[: self.max_output_bytes]
 
         result: Any | None = None
@@ -152,7 +163,9 @@ class SubprocessWorkerAdapter:
                 status = "PASS"
             except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError):
                 returncode = 126
-                stderr = (stderr + b"\nworker_stdout_not_single_json_value\n")[: self.max_output_bytes]
+                stderr = (stderr + b"\nworker_stdout_not_single_json_value\n")[
+                    : self.max_output_bytes
+                ]
 
         core = {
             "worker_id": self.worker_id,

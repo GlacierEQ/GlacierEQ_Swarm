@@ -10,7 +10,9 @@ from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE = ROOT / "crystallization_repo_worker_transport.py"
-spec = importlib.util.spec_from_file_location("crystallization_repo_worker_transport", MODULE)
+spec = importlib.util.spec_from_file_location(
+    "crystallization_repo_worker_transport", MODULE
+)
 transport = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = transport
 assert spec.loader is not None
@@ -69,7 +71,9 @@ class CrystallizationTransportTests(unittest.TestCase):
         stdout = io.StringIO()
         stderr = io.StringIO()
         with (
-            patch.object(sys, "stdin", FakeStdin(b'{"repository":"GlacierEQ/example"}')),
+            patch.object(
+                sys, "stdin", FakeStdin(b'{"repository":"GlacierEQ/example"}')
+            ),
             patch.object(sys, "stdout", stdout),
             patch.object(sys, "stderr", stderr),
             patch.object(transport.subprocess, "run", return_value=child),
@@ -86,7 +90,9 @@ class CrystallizationTransportTests(unittest.TestCase):
         stdout = io.StringIO()
         stderr = io.StringIO()
         with (
-            patch.object(sys, "stdin", FakeStdin(b'{"repository":"GlacierEQ/example"}')),
+            patch.object(
+                sys, "stdin", FakeStdin(b'{"repository":"GlacierEQ/example"}')
+            ),
             patch.object(sys, "stdout", stdout),
             patch.object(sys, "stderr", stderr),
             patch.object(transport.subprocess, "run", return_value=child),

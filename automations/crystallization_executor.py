@@ -6,6 +6,7 @@ material capabilities are implemented and verified, runtime behavior is proven,
 and deployment is real where deployment is part of the system's natural form.
 Green CI alone is never a terminal state.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -13,7 +14,6 @@ import json
 import os
 import re
 import shutil
-import subprocess
 import sys
 import textwrap
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -32,8 +32,15 @@ MACHINE = Path("machine/crystallization")
 OPEN_STATES = {"PARTIAL", "BROKEN", "MISSING", "UNKNOWN"}
 VALID_STATES = {"WORKING", "PARTIAL", "BROKEN", "MISSING", "OBSOLETE", "UNKNOWN"}
 DEPLOYABLE_KINDS = {
-    "web_app", "web_service", "api_service", "worker", "daemon",
-    "scheduled_service", "edge_function", "serverless", "mcp_server",
+    "web_app",
+    "web_service",
+    "api_service",
+    "worker",
+    "daemon",
+    "scheduled_service",
+    "edge_function",
+    "serverless",
+    "mcp_server",
     "agent_service",
 }
 FAKE_COMPLETION_MARKERS = (
@@ -97,7 +104,13 @@ def now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def run(argv: Sequence[str], *, cwd: Path | None = None, timeout: int = 900, check: bool = False):
+def run(
+    argv: Sequence[str],
+    *,
+    cwd: Path | None = None,
+    timeout: int = 900,
+    check: bool = False,
+):
     return plumbing.run(argv, cwd=cwd, timeout=timeout, check=check)
 
 
@@ -105,7 +118,10 @@ def discover_accessible_repositories() -> list[RepoMeta]:
     plumbing.require_tool("gh")
     result = run(
         [
-            "gh", "api", "--paginate", "--slurp",
+            "gh",
+            "api",
+            "--paginate",
+            "--slurp",
             "/user/repos?per_page=100&affiliation=owner,collaborator,organization_member&sort=full_name",
         ],
         timeout=180,
@@ -135,12 +151,17 @@ def discover_accessible_repositories() -> list[RepoMeta]:
                 name=str(row.get("name") or full_name.split("/", 1)[-1]),
                 owner=owner,
                 default_branch=str(row.get("default_branch") or "main"),
-                visibility=str(row.get("visibility") or ("private" if row.get("private") else "public")),
+                visibility=str(
+                    row.get("visibility")
+                    or ("private" if row.get("private") else "public")
+                ),
                 archived=bool(row.get("archived")),
                 fork=bool(row.get("fork")),
                 disabled=bool(row.get("disabled")),
                 description=str(row.get("description") or ""),
-                parent_full_name=str(parent.get("full_name")) if parent.get("full_name") else None,
+                parent_full_name=str(parent.get("full_name"))
+                if parent.get("full_name")
+                else None,
             )
         )
     return repos
@@ -160,7 +181,12 @@ def clone_or_refresh(meta: RepoMeta, root: Path) -> Path:
     else:
         run(["gh", "repo", "clone", meta.full_name, str(repo)], timeout=600, check=True)
     run(["git", "checkout", meta.default_branch], cwd=repo, timeout=60, check=True)
-    run(["git", "reset", "--hard", f"origin/{meta.default_branch}"], cwd=repo, timeout=60, check=True)
+    run(
+        ["git", "reset", "--hard", f"origin/{meta.default_branch}"],
+        cwd=repo,
+        timeout=60,
+        check=True,
+    )
     return repo
 
 
@@ -168,24 +194,55 @@ def prepare_branch(repo: Path, meta: RepoMeta) -> str:
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
     slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", meta.name)[:48]
     branch = f"crystallize/{stamp}-{slug}"
-    existing = run(["git", "branch", "--list", branch], cwd=repo, timeout=30, check=True)
+    existing = run(
+        ["git", "branch", "--list", branch], cwd=repo, timeout=30, check=True
+    )
     if existing.stdout.strip():
         run(["git", "branch", "-D", branch], cwd=repo, timeout=30, check=True)
-    run(["git", "checkout", "-b", branch, f"origin/{meta.default_branch}"], cwd=repo, timeout=60, check=True)
+    run(
+        ["git", "checkout", "-b", branch, f"origin/{meta.default_branch}"],
+        cwd=repo,
+        timeout=60,
+        check=True,
+    )
     return branch
 
 
 def evidence_paths(repo: Path) -> str:
     found: list[str] = []
     for rel in (
-        "README.md", "ISSUE_CONTRACT.md", "TARGET_CONTRACT.md", "ARCHITECTURE.md",
-        "DEV_UP_INSTRUCTIONS.md", "package.json", "pyproject.toml", "Cargo.toml",
-        "go.mod", "Makefile", "Dockerfile", "vercel.json", "fly.toml",
-        "supabase/config.toml", "netlify.toml",
+        "README.md",
+        "ISSUE_CONTRACT.md",
+        "TARGET_CONTRACT.md",
+        "ARCHITECTURE.md",
+        "DEV_UP_INSTRUCTIONS.md",
+        "package.json",
+        "pyproject.toml",
+        "Cargo.toml",
+        "go.mod",
+        "Makefile",
+        "Dockerfile",
+        "vercel.json",
+        "fly.toml",
+        "supabase/config.toml",
+        "netlify.toml",
     ):
         if (repo / rel).exists():
             found.append(rel)
-    for rel in ("src", "app", "lib", "packages", "services", "tests", "docs", "scripts", "deploy", "infra", ".github/workflows", "machine"):
+    for rel in (
+        "src",
+        "app",
+        "lib",
+        "packages",
+        "services",
+        "tests",
+        "docs",
+        "scripts",
+        "deploy",
+        "infra",
+        ".github/workflows",
+        "machine",
+    ):
         if (repo / rel).exists():
             found.append(rel + "/")
     return ", ".join(found) if found else "entire repository tree and git history"
@@ -296,7 +353,13 @@ def validate_manifests(repo: Path):
     except Exception as exc:
         return None, [], [], [f"manifest_invalid:{exc}"]
 
-    for key in ("canonical_identity", "purpose", "problem", "intended_outcome", "system_kind"):
+    for key in (
+        "canonical_identity",
+        "purpose",
+        "problem",
+        "intended_outcome",
+        "system_kind",
+    ):
         if not isinstance(purpose.get(key), str) or not str(purpose[key]).strip():
             blockers.append(f"purpose_{key}_missing")
     if not isinstance(purpose.get("consumers"), list) or not purpose["consumers"]:
@@ -329,7 +392,10 @@ def validate_manifests(repo: Path):
             blockers.append(f"capability_state_invalid:{cap_id or idx}")
         if not isinstance(cap.get("material"), bool):
             blockers.append(f"capability_material_missing:{cap_id or idx}")
-        if not isinstance(cap.get("description"), str) or not cap.get("description", "").strip():
+        if (
+            not isinstance(cap.get("description"), str)
+            or not cap.get("description", "").strip()
+        ):
             blockers.append(f"capability_description_missing:{cap_id or idx}")
         cap = dict(cap)
         cap["state"] = state
@@ -347,10 +413,14 @@ def validate_manifests(repo: Path):
         cap_id = str(gap.get("capability_id") or "").strip()
         if cap_id:
             listed.add(cap_id)
-        if not isinstance(gap.get("required_work"), str) or not gap.get("required_work", "").strip():
+        if (
+            not isinstance(gap.get("required_work"), str)
+            or not gap.get("required_work", "").strip()
+        ):
             blockers.append(f"gap_required_work_missing:{cap_id or 'unknown'}")
     expected = {
-        str(cap.get("id")) for cap in normalized
+        str(cap.get("id"))
+        for cap in normalized
         if cap.get("material") is True and cap.get("state") in OPEN_STATES
     }
     if expected - listed:
@@ -377,7 +447,18 @@ def scan_fake_completion(repo: Path) -> list[str]:
         for path in root.rglob("*"):
             if not path.is_file() or path.stat().st_size > 1_000_000:
                 continue
-            if path.suffix.lower() not in {".py", ".ts", ".tsx", ".js", ".jsx", ".rs", ".go", ".java", ".kt", ".sql"}:
+            if path.suffix.lower() not in {
+                ".py",
+                ".ts",
+                ".tsx",
+                ".js",
+                ".jsx",
+                ".rs",
+                ".go",
+                ".java",
+                ".kt",
+                ".sql",
+            }:
                 continue
             text = path.read_text(encoding="utf-8", errors="ignore")
             for marker in FAKE_COMPLETION_MARKERS:
@@ -391,12 +472,14 @@ def execute(repo: Path, commands: Iterable[list[str]], timeout: int = 1800):
     ok = True
     for command in commands:
         result = run(command, cwd=repo, timeout=timeout, check=False)
-        records.append({
-            "argv": command,
-            "returncode": result.returncode,
-            "stdout_tail": result.stdout[-2000:],
-            "stderr_tail": result.stderr[-2000:],
-        })
+        records.append(
+            {
+                "argv": command,
+                "returncode": result.returncode,
+                "stdout_tail": result.stdout[-2000:],
+                "stderr_tail": result.stderr[-2000:],
+            }
+        )
         if result.returncode != 0:
             ok = False
             break
@@ -427,7 +510,10 @@ def runtime_commands(repo: Path) -> list[list[str]]:
 
 
 def deployment_proof(repo: Path, purpose: dict[str, Any]):
-    naturally = bool(purpose.get("naturally_deployable")) or str(purpose.get("system_kind")) in DEPLOYABLE_KINDS
+    naturally = (
+        bool(purpose.get("naturally_deployable"))
+        or str(purpose.get("system_kind")) in DEPLOYABLE_KINDS
+    )
     if not naturally:
         return True, "NOT_APPLICABLE", [{"not_applicable": True}], []
     receipt_path = repo / MACHINE / "deployment-receipt.json"
@@ -440,7 +526,14 @@ def deployment_proof(repo: Path, purpose: dict[str, Any]):
     blockers: list[str] = []
     if receipt.get("status") != "PASS":
         blockers.append("deployment_status_not_pass")
-    for key in ("target", "artifact_or_endpoint", "smoke_command", "health_or_readiness", "logs_or_run_reference", "rollback_mechanism"):
+    for key in (
+        "target",
+        "artifact_or_endpoint",
+        "smoke_command",
+        "health_or_readiness",
+        "logs_or_run_reference",
+        "rollback_mechanism",
+    ):
         if not receipt.get(key):
             blockers.append(f"deployment_{key}_missing")
     if receipt.get("smoke_returncode") != 0:
@@ -457,7 +550,9 @@ def resolve_nonactive(meta: RepoMeta, repo: Path) -> Result | None:
     except Exception:
         return None
     lineage = purpose.get("lineage") or {}
-    successor = lineage.get("canonical_successor") if isinstance(lineage, dict) else None
+    successor = (
+        lineage.get("canonical_successor") if isinstance(lineage, dict) else None
+    )
     if isinstance(successor, str) and successor.strip():
         return Result(
             repository=meta.full_name,
@@ -480,7 +575,9 @@ def resolve_nonactive(meta: RepoMeta, repo: Path) -> Result | None:
     return None
 
 
-def classify(*, purpose, capabilities, gaps, blockers, test_ok, build_ok, runtime_ok, deploy_ok):
+def classify(
+    *, purpose, capabilities, gaps, blockers, test_ok, build_ok, runtime_ok, deploy_ok
+):
     if purpose is None:
         return RepoStatus.UNKNOWN
     material = [cap for cap in capabilities if cap.get("material") is True]
@@ -500,7 +597,9 @@ def classify(*, purpose, capabilities, gaps, blockers, test_ok, build_ok, runtim
     return RepoStatus.CRYSTALLIZED
 
 
-def write_completion_receipt(repo: Path, result: Result, evidence: dict[str, Any]) -> str:
+def write_completion_receipt(
+    repo: Path, result: Result, evidence: dict[str, Any]
+) -> str:
     target = repo / MACHINE
     target.mkdir(parents=True, exist_ok=True)
     path = target / "completion-receipt.json"
@@ -524,7 +623,9 @@ def write_completion_receipt(repo: Path, result: Result, evidence: dict[str, Any
         "terminal_truth": result.status == RepoStatus.CRYSTALLIZED.value,
         "verified_at": now(),
     }
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return str(path.relative_to(repo))
 
 
@@ -534,7 +635,7 @@ def create_pr(repo: Path, meta: RepoMeta, branch: str, result: Result):
         CRYSTALLIZATION-MANDATE work unit.
 
         Current independently verified status: **{result.status}**
-        Purpose: {result.purpose or 'unresolved'}
+        Purpose: {result.purpose or "unresolved"}
         Verified material capabilities: {result.verified_capability_count}/{result.capability_count}
         Remaining material gaps: {result.remaining_gap_count}
 
@@ -546,9 +647,19 @@ def create_pr(repo: Path, meta: RepoMeta, branch: str, result: Result):
     ).strip()
     created = run(
         [
-            "gh", "pr", "create", "--repo", meta.full_name, "--base", meta.default_branch,
-            "--head", branch, "--title", f"Crystallize {meta.name}: purpose-complete system",
-            "--body", body,
+            "gh",
+            "pr",
+            "create",
+            "--repo",
+            meta.full_name,
+            "--base",
+            meta.default_branch,
+            "--head",
+            branch,
+            "--title",
+            f"Crystallize {meta.name}: purpose-complete system",
+            "--body",
+            body,
         ],
         cwd=repo,
         timeout=120,
@@ -562,7 +673,9 @@ def create_pr(repo: Path, meta: RepoMeta, branch: str, result: Result):
     return created.stdout.strip() or None
 
 
-def crystallize_one(meta: RepoMeta, *, root: Path, worker_cmd: str | None, push: bool, open_pr: bool) -> Result:
+def crystallize_one(
+    meta: RepoMeta, *, root: Path, worker_cmd: str | None, push: bool, open_pr: bool
+) -> Result:
     branch: str | None = None
     try:
         repo = clone_or_refresh(meta, root)
@@ -573,7 +686,9 @@ def crystallize_one(meta: RepoMeta, *, root: Path, worker_cmd: str | None, push:
             return Result(
                 repository=meta.full_name,
                 status=RepoStatus.UNKNOWN.value,
-                blockers=["archived_or_disabled_without_verified_successor_or_archive_reason"],
+                blockers=[
+                    "archived_or_disabled_without_verified_successor_or_archive_reason"
+                ],
             )
 
         branch = prepare_branch(repo, meta)
@@ -592,9 +707,15 @@ def crystallize_one(meta: RepoMeta, *, root: Path, worker_cmd: str | None, push:
         test_commands = plumbing.infer_test_commands(repo)
         build_commands = plumbing.infer_build_commands(repo)
         run_commands = runtime_commands(repo)
-        test_ok, test_records = execute(repo, test_commands) if test_commands else (False, [])
-        build_ok, build_records = execute(repo, build_commands) if build_commands else (False, [])
-        runtime_ok, runtime_records = execute(repo, run_commands) if run_commands else (False, [])
+        test_ok, test_records = (
+            execute(repo, test_commands) if test_commands else (False, [])
+        )
+        build_ok, build_records = (
+            execute(repo, build_commands) if build_commands else (False, [])
+        )
+        runtime_ok, runtime_records = (
+            execute(repo, run_commands) if run_commands else (False, [])
+        )
         if not test_commands:
             blockers.append("behavior_test_command_missing")
         if not build_commands:
@@ -609,9 +730,16 @@ def crystallize_one(meta: RepoMeta, *, root: Path, worker_cmd: str | None, push:
             blockers.append("runtime_failed")
 
         if purpose is None:
-            deploy_ok, deploy_result, deploy_records, deploy_blockers = False, "UNKNOWN", [], ["deployment_applicability_unknown"]
+            deploy_ok, deploy_result, deploy_records, deploy_blockers = (
+                False,
+                "UNKNOWN",
+                [],
+                ["deployment_applicability_unknown"],
+            )
         else:
-            deploy_ok, deploy_result, deploy_records, deploy_blockers = deployment_proof(repo, purpose)
+            deploy_ok, deploy_result, deploy_records, deploy_blockers = (
+                deployment_proof(repo, purpose)
+            )
         blockers.extend(deploy_blockers)
 
         material = [cap for cap in capabilities if cap.get("material") is True]
@@ -620,12 +748,17 @@ def crystallize_one(meta: RepoMeta, *, root: Path, worker_cmd: str | None, push:
         }
         unresolved = sorted(open_ids)
         verified = [
-            cap for cap in material
+            cap
+            for cap in material
             if cap.get("state") == "WORKING"
             and isinstance(cap.get("verification"), list)
             and bool(cap.get("verification"))
         ]
-        open_gaps = [gap for gap in gaps if str(gap.get("capability_id")) in open_ids] if gaps else []
+        open_gaps = (
+            [gap for gap in gaps if str(gap.get("capability_id")) in open_ids]
+            if gaps
+            else []
+        )
 
         status = classify(
             purpose=purpose,
@@ -663,16 +796,36 @@ def crystallize_one(meta: RepoMeta, *, root: Path, worker_cmd: str | None, push:
         receipt = write_completion_receipt(
             repo,
             result,
-            {"tests": test_records, "build": build_records, "runtime": runtime_records, "deployment": deploy_records},
+            {
+                "tests": test_records,
+                "build": build_records,
+                "runtime": runtime_records,
+                "deployment": deploy_records,
+            },
         )
         result.proof_artifacts.append(receipt)
 
         changed = plumbing.changed_files(repo)
         if changed:
             run(["git", "add", "-A"], cwd=repo, timeout=60, check=True)
-            run(["git", "commit", "-m", f"crystallize: {meta.name} purpose-complete work unit"], cwd=repo, timeout=180, check=True)
+            run(
+                [
+                    "git",
+                    "commit",
+                    "-m",
+                    f"crystallize: {meta.name} purpose-complete work unit",
+                ],
+                cwd=repo,
+                timeout=180,
+                check=True,
+            )
             if push:
-                run(["git", "push", "-u", "origin", branch, "--force-with-lease"], cwd=repo, timeout=600, check=True)
+                run(
+                    ["git", "push", "-u", "origin", branch, "--force-with-lease"],
+                    cwd=repo,
+                    timeout=600,
+                    check=True,
+                )
                 if open_pr:
                     result.pr_url = create_pr(repo, meta, branch, result)
         return result
@@ -701,15 +854,27 @@ def save_ledger(results: list[Result]) -> Path:
         "generated_at": now(),
         "total_repositories": len(results),
         "crystallized_repositories": counts.get(RepoStatus.CRYSTALLIZED.value, 0),
-        "canonicalized_successors": counts.get(RepoStatus.CANONICALIZED_SUCCESSOR.value, 0),
-        "intentionally_archived": counts.get(RepoStatus.INTENTIONALLY_ARCHIVED.value, 0),
+        "canonicalized_successors": counts.get(
+            RepoStatus.CANONICALIZED_SUCCESSOR.value, 0
+        ),
+        "intentionally_archived": counts.get(
+            RepoStatus.INTENTIONALLY_ARCHIVED.value, 0
+        ),
         "broken_remaining": counts.get(RepoStatus.BROKEN.value, 0),
         "incomplete_remaining": counts.get(RepoStatus.INCOMPLETE.value, 0),
         "unknown_remaining": counts.get(RepoStatus.UNKNOWN.value, 0),
-        "verified_capabilities": sum(result.verified_capability_count for result in results),
+        "verified_capabilities": sum(
+            result.verified_capability_count for result in results
+        ),
         "unresolved_failures": [
-            {"repository": result.repository, "status": result.status, "blockers": result.blockers, "gaps": result.unresolved_gaps}
-            for result in results if result.status not in resolved
+            {
+                "repository": result.repository,
+                "status": result.status,
+                "blockers": result.blockers,
+                "gaps": result.unresolved_gaps,
+            }
+            for result in results
+            if result.status not in resolved
         ],
         "results": [asdict(result) for result in results],
     }
@@ -726,7 +891,13 @@ def load_priority(path: Path | None) -> set[str]:
     if path is None:
         return set()
     raw = json.loads(path.read_text(encoding="utf-8"))
-    items = raw if isinstance(raw, list) else raw.get("repositories", []) if isinstance(raw, dict) else []
+    items = (
+        raw
+        if isinstance(raw, list)
+        else raw.get("repositories", [])
+        if isinstance(raw, dict)
+        else []
+    )
     out: set[str] = set()
     for item in items:
         if isinstance(item, str):
@@ -739,13 +910,22 @@ def load_priority(path: Path | None) -> set[str]:
 
 
 def parse_args(argv: Sequence[str] | None = None):
-    parser = argparse.ArgumentParser(description="Crystallize every accessible repository by purpose")
+    parser = argparse.ArgumentParser(
+        description="Crystallize every accessible repository by purpose"
+    )
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT)
     parser.add_argument("--repo", action="append", default=[])
     parser.add_argument("--priority-file", type=Path)
-    parser.add_argument("--limit", type=int, default=0, help="logistics only; 0 means all selected repositories")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="logistics only; 0 means all selected repositories",
+    )
     parser.add_argument("--workers", type=int, default=2)
-    parser.add_argument("--worker-cmd", default=os.environ.get("CRYSTALLIZATION_WORKER_CMD"))
+    parser.add_argument(
+        "--worker-cmd", default=os.environ.get("CRYSTALLIZATION_WORKER_CMD")
+    )
     parser.add_argument("--no-push", action="store_true")
     parser.add_argument("--no-pr", action="store_true")
     parser.add_argument("--list", action="store_true")
@@ -758,8 +938,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     repos = discover_accessible_repositories()
     if args.repo:
         wanted = set(args.repo)
-        repos = [repo for repo in repos if repo.full_name in wanted or repo.name in wanted]
-    repos.sort(key=lambda repo: (0 if repo.full_name in priority or repo.name in priority else 1, repo.full_name.lower()))
+        repos = [
+            repo for repo in repos if repo.full_name in wanted or repo.name in wanted
+        ]
+    repos.sort(
+        key=lambda repo: (
+            0 if repo.full_name in priority or repo.name in priority else 1,
+            repo.full_name.lower(),
+        )
+    )
     if args.limit > 0:
         repos = repos[: args.limit]
     if args.list:
@@ -798,7 +985,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         RepoStatus.INTENTIONALLY_ARCHIVED.value,
     }
     unresolved = [result for result in results if result.status not in resolved]
-    print(f"crystallized={sum(result.status == RepoStatus.CRYSTALLIZED.value for result in results)}/{len(results)}")
+    print(
+        f"crystallized={sum(result.status == RepoStatus.CRYSTALLIZED.value for result in results)}/{len(results)}"
+    )
     print(f"unresolved={len(unresolved)}")
     print(f"ledger={ledger}")
     return 0 if not unresolved else 2

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
 import io
 import json
 import sys
@@ -75,8 +74,14 @@ class CrystallizationDispatchTests(unittest.TestCase):
             self.assertEqual(current["unresolved_repositories"], 3)
             self.assertFalse(current["estate_complete"])
             by_repo = {row["repository"]: row for row in current["repositories"]}
-            self.assertEqual(by_repo["GlacierEQ/archived"]["resolution_reason"], "ARCHIVE_RESOLUTION_REQUIRED")
-            self.assertEqual(by_repo["GlacierEQ/forked"]["resolution_reason"], "FORK_LINEAGE_RESOLUTION_REQUIRED")
+            self.assertEqual(
+                by_repo["GlacierEQ/archived"]["resolution_reason"],
+                "ARCHIVE_RESOLUTION_REQUIRED",
+            )
+            self.assertEqual(
+                by_repo["GlacierEQ/forked"]["resolution_reason"],
+                "FORK_LINEAGE_RESOLUTION_REQUIRED",
+            )
 
     def test_terminal_result_advances_only_that_repository(self):
         with tempfile.TemporaryDirectory() as td:
@@ -121,7 +126,9 @@ class CrystallizationDispatchTests(unittest.TestCase):
             ledger = CrystallizationLedger(Path(td) / "ledger.sqlite3")
             ledger.record_inventory(self.inventory())
             first = {"repository": "GlacierEQ/active", "status": "INCOMPLETE"}
-            ledger.record_work_unit("crystallize::active::g0001", "GlacierEQ/active", 1, first)
+            ledger.record_work_unit(
+                "crystallize::active::g0001", "GlacierEQ/active", 1, first
+            )
             with self.assertRaisesRegex(ValueError, "ledger_task_result_conflict"):
                 ledger.record_work_unit(
                     "crystallize::active::g0001",
@@ -133,16 +140,26 @@ class CrystallizationDispatchTests(unittest.TestCase):
     def test_should_submit_never_treats_archive_or_fork_as_resolved(self):
         active, archived, forked = self.inventory()
         self.assertEqual(dispatch.should_submit(active, None), (True, "EXECUTE"))
-        self.assertEqual(dispatch.should_submit(archived, None), (False, "ARCHIVE_RESOLUTION_REQUIRED"))
-        self.assertEqual(dispatch.should_submit(forked, None), (False, "FORK_LINEAGE_RESOLUTION_REQUIRED"))
+        self.assertEqual(
+            dispatch.should_submit(archived, None),
+            (False, "ARCHIVE_RESOLUTION_REQUIRED"),
+        )
+        self.assertEqual(
+            dispatch.should_submit(forked, None),
+            (False, "FORK_LINEAGE_RESOLUTION_REQUIRED"),
+        )
         self.assertEqual(
             dispatch.should_submit(active, {"status": "CRYSTALLIZED"}),
             (False, "ALREADY_TERMINAL"),
         )
 
     def test_task_id_is_generation_addressed(self):
-        self.assertEqual(dispatch.task_id("GlacierEQ/a-repo", 1), "crystallize::a-repo::g0001")
-        self.assertEqual(dispatch.task_id("GlacierEQ/a-repo", 12), "crystallize::a-repo::g0012")
+        self.assertEqual(
+            dispatch.task_id("GlacierEQ/a-repo", 1), "crystallize::a-repo::g0001"
+        )
+        self.assertEqual(
+            dispatch.task_id("GlacierEQ/a-repo", 12), "crystallize::a-repo::g0012"
+        )
 
     def test_valid_incomplete_work_unit_exits_zero_as_truth_not_transport_failure(self):
         payload = {"repository": "GlacierEQ/active"}

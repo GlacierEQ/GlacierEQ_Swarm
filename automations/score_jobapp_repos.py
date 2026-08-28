@@ -4,6 +4,7 @@
 Factors: integrated, family, original, size, description, public,
 AKOS.md, tests/, src/ depth. Cap 99 (never fake 100 production).
 """
+
 from __future__ import annotations
 
 import json
@@ -94,7 +95,15 @@ def score(it: dict, meta: dict, flags: dict) -> tuple[int, list[str]]:
     fam = it.get("family") or ""
     if fam == "framework":
         s += 18
-    elif fam in ("SpaceX", "NVIDIA", "Anthropic", "Microsoft", "Notion", "APEX", "Agents/MCP"):
+    elif fam in (
+        "SpaceX",
+        "NVIDIA",
+        "Anthropic",
+        "Microsoft",
+        "Notion",
+        "APEX",
+        "Agents/MCP",
+    ):
         s += 16
     elif "Colossus" in fam or fam.startswith("xAI"):
         s += 16

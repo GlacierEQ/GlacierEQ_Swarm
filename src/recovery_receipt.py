@@ -1,5 +1,7 @@
 """Worker result receipt separating execution from useful outcome."""
+
 from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class WorkerReceipt:

@@ -3,6 +3,7 @@
 Zero LLM. Idempotent. Does NOT quit user apps or disable login items.
 Ptr outputs → GlacierEQ_Swarm/state/
 """
+
 from __future__ import annotations
 
 import json
@@ -35,7 +36,9 @@ SAFE_CACHE_DIRS = [
 
 def sh(cmd: list[str], timeout: int = 60) -> str:
     try:
-        return subprocess.check_output(cmd, text=True, stderr=subprocess.STDOUT, timeout=timeout)
+        return subprocess.check_output(
+            cmd, text=True, stderr=subprocess.STDOUT, timeout=timeout
+        )
     except Exception as e:
         return f"err:{e}"
 
@@ -112,7 +115,9 @@ def main() -> None:
         "free_kb_after": after,
         "reclaimed_bytes_walk": reclaimed,
         "reclaimed_mb_walk": round(reclaimed / (1024 * 1024), 1),
-        "df_delta_mb": round((after - before) / 1024, 1) if before > 0 and after > 0 else None,
+        "df_delta_mb": round((after - before) / 1024, 1)
+        if before > 0 and after > 0
+        else None,
         "removed_dirs": removed,
         "swap": swap,
         "load": load,
@@ -145,7 +150,9 @@ def main() -> None:
     }
     OUT.write_text(json.dumps(report, indent=2))
     print(f"=== device-stability-flipper @ {ts}")
-    print(f"reclaimed_walk_mb={report['reclaimed_mb_walk']} df_delta_mb={report['df_delta_mb']}")
+    print(
+        f"reclaimed_walk_mb={report['reclaimed_mb_walk']} df_delta_mb={report['df_delta_mb']}"
+    )
     print(swap)
     print(load)
     print(f"ptr: {OUT}")

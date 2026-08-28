@@ -8,6 +8,7 @@ Merges:
 
 Heavy = full verification on disk artifacts, not chat walls.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -95,7 +96,9 @@ def main() -> int:
     savings = {"bytes_in": 0, "bytes_out": 0, "bytes_saved": 0, "files_ok": 0}
     try:
         tsav = load_connector()
-        microwave_records = tsav.microwave_batch(paths, mode="pure_pointer", max_workers=4)
+        microwave_records = tsav.microwave_batch(
+            paths, mode="pure_pointer", max_workers=4
+        )
         for r in microwave_records:
             if r.get("ok"):
                 savings["bytes_in"] += r.get("bytes_in", 0)
@@ -121,9 +124,11 @@ def main() -> int:
         savings["error"] = str(e)[:200]
 
     # Voice mission slice
-    intake_n = len(list((STATE / "voice_memos" / "intake").glob("*.json"))) if (
-        STATE / "voice_memos" / "intake"
-    ).is_dir() else 0
+    intake_n = (
+        len(list((STATE / "voice_memos" / "intake").glob("*.json")))
+        if (STATE / "voice_memos" / "intake").is_dir()
+        else 0
+    )
     queue_ptr = STATE / "voice_memos" / "stage_c_queue.json"
 
     report = {

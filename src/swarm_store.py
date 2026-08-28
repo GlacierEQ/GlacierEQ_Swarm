@@ -6,6 +6,7 @@ receipts are persisted transactionally in SQLite. Snapshot writes are monotonic
 by revision and protected by content digests so a restart cannot silently load
 an older or corrupted orchestration state.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -78,10 +79,14 @@ class SwarmStateStore:
 
     def revision(self) -> int:
         with self._connect() as connection:
-            row = connection.execute("SELECT revision FROM swarm_state WHERE singleton=1").fetchone()
+            row = connection.execute(
+                "SELECT revision FROM swarm_state WHERE singleton=1"
+            ).fetchone()
         return int(row["revision"]) if row else 0
 
-    def save(self, orchestrator: SwarmOrchestrator, *, expected_revision: int | None = None) -> int:
+    def save(
+        self, orchestrator: SwarmOrchestrator, *, expected_revision: int | None = None
+    ) -> int:
         snapshot = orchestrator.snapshot()
         snapshot_json = _json(snapshot)
         digest = _sha(snapshot_json.encode("utf-8"))
@@ -93,7 +98,9 @@ class SwarmStateStore:
             ).fetchone()
             current = int(row["revision"]) if row else 0
             if expected_revision is not None and current != expected_revision:
-                raise ValueError(f"swarm_revision_conflict:{current}:{expected_revision}")
+                raise ValueError(
+                    f"swarm_revision_conflict:{current}:{expected_revision}"
+                )
             if row and row["snapshot_digest"] == digest:
                 connection.commit()
                 return current
@@ -132,7 +139,9 @@ class SwarmStateStore:
             raise ValueError("swarm_snapshot_store_invalid")
         return SwarmOrchestrator.from_snapshot(payload), int(row["revision"])
 
-    def put_task_payload(self, task_id: str, payload: Any, expected_digest: str) -> None:
+    def put_task_payload(
+        self, task_id: str, payload: Any, expected_digest: str
+    ) -> None:
         payload_json = _json(payload)
         digest = _digest(payload)
         if digest != expected_digest:
@@ -162,7 +171,8 @@ class SwarmStateStore:
     def get_task_payload(self, task_id: str, expected_digest: str | None = None) -> Any:
         with self._connect() as connection:
             row = connection.execute(
-                "SELECT payload_json, payload_digest FROM task_payloads WHERE task_id=?", (task_id,)
+                "SELECT payload_json, payload_digest FROM task_payloads WHERE task_id=?",
+                (task_id,),
             ).fetchone()
         if row is None:
             raise KeyError(f"task_payload_missing:{task_id}")
@@ -175,7 +185,9 @@ class SwarmStateStore:
             raise ValueError("task_payload_scheduler_digest_mismatch")
         return payload
 
-    def put_task_result(self, task_id: str, result: Any, execution_receipt: Mapping[str, Any]) -> None:
+    def put_task_result(
+        self, task_id: str, result: Any, execution_receipt: Mapping[str, Any]
+    ) -> None:
         result_json = _json(result)
         result_digest = _digest(result)
         receipt_doc = dict(execution_receipt)
@@ -189,7 +201,10 @@ class SwarmStateStore:
                 (task_id,),
             ).fetchone()
             if existing is not None:
-                if existing["result_digest"] == result_digest and existing["execution_receipt_digest"] == receipt_digest:
+                if (
+                    existing["result_digest"] == result_digest
+                    and existing["execution_receipt_digest"] == receipt_digest
+                ):
                     connection.commit()
                     return
                 raise ValueError("task_result_conflict")
@@ -251,7 +266,9 @@ class SwarmStateStore:
             }
 
         with self._connect() as connection:
-            payload_rows = connection.execute("SELECT task_id, payload_json, payload_digest FROM task_payloads").fetchall()
+            payload_rows = connection.execute(
+                "SELECT task_id, payload_json, payload_digest FROM task_payloads"
+            ).fetchall()
             result_rows = connection.execute(
                 "SELECT task_id, result_json, result_digest, execution_receipt_json, execution_receipt_digest FROM task_results"
             ).fetchall()
@@ -268,14 +285,19 @@ class SwarmStateStore:
             except Exception:
                 errors.append(f"payload_invalid:{row['task_id']}")
         for task_id, task in scheduler_tasks.items():
-            if task["status"] not in {"SUCCEEDED"} and task_id not in {row["task_id"] for row in payload_rows}:
+            if task["status"] not in {"SUCCEEDED"} and task_id not in {
+                row["task_id"] for row in payload_rows
+            }:
                 errors.append(f"payload_missing:{task_id}")
         for row in result_rows:
             try:
                 result = json.loads(row["result_json"])
                 if _digest(result) != row["result_digest"]:
                     errors.append(f"result_corrupt:{row['task_id']}")
-                if _sha(str(row["execution_receipt_json"]).encode("utf-8")) != row["execution_receipt_digest"]:
+                if (
+                    _sha(str(row["execution_receipt_json"]).encode("utf-8"))
+                    != row["execution_receipt_digest"]
+                ):
                     errors.append(f"execution_receipt_corrupt:{row['task_id']}")
                 task = scheduler_tasks.get(row["task_id"])
                 if task is None:

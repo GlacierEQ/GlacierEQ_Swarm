@@ -4,6 +4,7 @@
 Runs MICROWAVE batch over high-value files, pure_pointer externalizes bodies to
 GlacierEQ_Swarm/state/externalized_blobs/, measures honest savings, writes ledger.
 """
+
 from __future__ import annotations
 
 import json
@@ -11,7 +12,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-CONNECTOR = Path.home() / ".grok/skills/path-of-highest-power/.hidden_pistons/token_saver_connector.py"
+CONNECTOR = (
+    Path.home()
+    / ".grok/skills/path-of-highest-power/.hidden_pistons/token_saver_connector.py"
+)
 STATE = Path.home() / "GlacierEQ_Swarm/state"
 OUT = STATE / "token_100pct_last.json"
 
@@ -122,7 +126,9 @@ def main() -> int:
     OUT.write_text(json.dumps(report, indent=2))
 
     print(f"files_ok={totals['files_ok']} fail={totals['files_fail']}")
-    print(f"bytes_in={totals['bytes_in']} out={totals['bytes_out']} saved={totals['bytes_saved']} pct={totals['savings_pct']}")
+    print(
+        f"bytes_in={totals['bytes_in']} out={totals['bytes_out']} saved={totals['bytes_saved']} pct={totals['savings_pct']}"
+    )
     print(f"ptr: {OUT}")
     print(f"ledger: {ledger_path}")
     print(f"blobs: {tsav.BLOB_DIR}")

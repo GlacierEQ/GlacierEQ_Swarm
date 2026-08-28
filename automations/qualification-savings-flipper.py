@@ -2,6 +2,7 @@
 """Burger flipper for this goal: periodic qualification run + token savings report.
 Local exec, pointers only. Uses goal scratch. Follow swarm/path/pro-code.
 """
+
 import os
 import sys
 import subprocess
@@ -13,6 +14,7 @@ SCRATCH = os.path.join(STATE_DIR, "daily_scratch")
 STATE_PTR = "/Users/kcbflux/GlacierEQ_Swarm/goals/goal-2026-07-02-high-ai-position.md"
 MAP_PTR = os.path.join(STATE_DIR, "ecosystem_map.json")
 FLIPPER_LOG = os.path.join(STATE_DIR, "flipper_last_run.json")
+
 
 def run():
     os.makedirs(SCRATCH, exist_ok=True)
@@ -40,12 +42,16 @@ def run():
         print(f"Runner error: {e}")
     try:
         import json
+
         with open(FLIPPER_LOG, "w") as f:
             json.dump(result, f, indent=2)
     except Exception as e:
         print(f"Log write error: {e}")
-    print("Pro_Code savings on ecosystem (GlacierEQ + pro-code MOC). Upgrade: pointers + MCPs for < burn.")
+    print(
+        "Pro_Code savings on ecosystem (GlacierEQ + pro-code MOC). Upgrade: pointers + MCPs for < burn."
+    )
     print(f"Full results ptr: {SCRATCH}/ + {MAP_PTR} + {STATE_PTR}")
+
 
 if __name__ == "__main__":
     run()

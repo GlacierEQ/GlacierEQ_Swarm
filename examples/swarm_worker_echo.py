@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Minimal fixed-command worker used to prove the Swarm execution contract."""
+
 from __future__ import annotations
 
 import hashlib
@@ -10,7 +11,9 @@ import sys
 def main() -> int:
     try:
         payload = json.load(sys.stdin)
-        body = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+        body = json.dumps(
+            payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
         result = {
             "status": "OK",
             "worker": "echo",
@@ -20,7 +23,10 @@ def main() -> int:
         print(json.dumps(result, sort_keys=True))
         return 0
     except Exception as exc:
-        print(json.dumps({"status": "ERROR", "reason": f"{type(exc).__name__}:{exc}"}), file=sys.stderr)
+        print(
+            json.dumps({"status": "ERROR", "reason": f"{type(exc).__name__}:{exc}"}),
+            file=sys.stderr,
+        )
         return 2
 
 

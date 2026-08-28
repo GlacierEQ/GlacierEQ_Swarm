@@ -12,11 +12,11 @@ truth and process health separate by construction:
 The implementation command remains operator-controlled through
 `CRYSTALLIZATION_IMPLEMENTER_CMD`.
 """
+
 from __future__ import annotations
 
 import json
 import os
-import re
 import sys
 from pathlib import Path
 from typing import Any, Mapping
@@ -39,11 +39,17 @@ VALID_OUTCOMES = {
 
 
 def _remote_branch_exists(repo: Path, branch: str) -> bool:
-    result = core.run(["git", "ls-remote", "--exit-code", "--heads", "origin", branch], cwd=repo, timeout=120)
+    result = core.run(
+        ["git", "ls-remote", "--exit-code", "--heads", "origin", branch],
+        cwd=repo,
+        timeout=120,
+    )
     return result["returncode"] == 0 and bool(result["stdout"].strip())
 
 
-def ensure_continuation_checkout(repository: str, default_branch: str, root: Path) -> tuple[Path, str, str]:
+def ensure_continuation_checkout(
+    repository: str, default_branch: str, root: Path
+) -> tuple[Path, str, str]:
     name = repository.split("/", 1)[1]
     repo = root / name
     root.mkdir(parents=True, exist_ok=True)
@@ -54,25 +60,46 @@ def ensure_continuation_checkout(repository: str, default_branch: str, root: Pat
         core.require_success(status, "git_status")
         if status["stdout"].strip():
             raise RuntimeError("workspace_dirty_refusing_to_overwrite")
-        core.require_success(core.run(["git", "fetch", "origin", "--prune"], cwd=repo, timeout=900), "git_fetch")
+        core.require_success(
+            core.run(["git", "fetch", "origin", "--prune"], cwd=repo, timeout=900),
+            "git_fetch",
+        )
     else:
-        core.require_success(core.run(["gh", "repo", "clone", repository, str(repo)], timeout=1200), "gh_clone")
-        core.require_success(core.run(["git", "fetch", "origin", "--prune"], cwd=repo, timeout=900), "git_fetch")
+        core.require_success(
+            core.run(["gh", "repo", "clone", repository, str(repo)], timeout=1200),
+            "gh_clone",
+        )
+        core.require_success(
+            core.run(["git", "fetch", "origin", "--prune"], cwd=repo, timeout=900),
+            "git_fetch",
+        )
 
     branch = core.safe_branch(repository)
     if _remote_branch_exists(repo, branch):
         core.require_success(
-            core.run(["git", "checkout", "-B", branch, f"origin/{branch}"], cwd=repo, timeout=120),
+            core.run(
+                ["git", "checkout", "-B", branch, f"origin/{branch}"],
+                cwd=repo,
+                timeout=120,
+            ),
             "git_checkout_existing_crystallization",
         )
         ancestry = "CONTINUE_REMOTE_CRYSTALLIZATION"
     else:
         core.require_success(
-            core.run(["git", "checkout", "-B", default_branch, f"origin/{default_branch}"], cwd=repo, timeout=120),
+            core.run(
+                ["git", "checkout", "-B", default_branch, f"origin/{default_branch}"],
+                cwd=repo,
+                timeout=120,
+            ),
             "git_checkout_default",
         )
         core.require_success(
-            core.run(["git", "checkout", "-B", branch, f"origin/{default_branch}"], cwd=repo, timeout=120),
+            core.run(
+                ["git", "checkout", "-B", branch, f"origin/{default_branch}"],
+                cwd=repo,
+                timeout=120,
+            ),
             "git_checkout_new_crystallization",
         )
         ancestry = "START_FROM_DEFAULT_BRANCH"
@@ -86,12 +113,20 @@ def _safe_model(repo: Path) -> tuple[dict[str, Any] | None, str | None]:
         return None, f"{type(exc).__name__}:{exc}"
 
 
-def _proof(repo: Path, model: Mapping[str, Any]) -> tuple[dict[str, Any], str, dict[str, Any] | None]:
+def _proof(
+    repo: Path, model: Mapping[str, Any]
+) -> tuple[dict[str, Any], str, dict[str, Any] | None]:
     plan = model["plan"]
     test_ok, test_receipts = core.execute_commands(repo, plan["test_commands"], "test")
-    build_ok, build_receipts = core.execute_commands(repo, plan["build_commands"], "build")
-    runtime_ok, runtime_receipts = core.execute_commands(repo, plan["runtime_commands"], "runtime")
-    deployment_result, deployment_receipt = core.deployment_proof(repo, plan["naturally_deployable"])
+    build_ok, build_receipts = core.execute_commands(
+        repo, plan["build_commands"], "build"
+    )
+    runtime_ok, runtime_receipts = core.execute_commands(
+        repo, plan["runtime_commands"], "runtime"
+    )
+    deployment_result, deployment_receipt = core.deployment_proof(
+        repo, plan["naturally_deployable"]
+    )
     proof = {
         "test_ok": test_ok,
         "build_ok": build_ok,
@@ -116,11 +151,15 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
     default_branch = payload.get("default_branch", "main")
     if not isinstance(default_branch, str) or not default_branch.strip():
         raise ValueError("default_branch_invalid")
-    root = Path(os.environ.get("CRYSTALLIZATION_WORKSPACE_ROOT", "/data/crystallization-repos")).resolve()
+    root = Path(
+        os.environ.get("CRYSTALLIZATION_WORKSPACE_ROOT", "/data/crystallization-repos")
+    ).resolve()
     push = bool(payload.get("push", True))
     open_pr = bool(payload.get("open_pr", True))
 
-    repo, branch, ancestry = ensure_continuation_checkout(repository, default_branch, root)
+    repo, branch, ancestry = ensure_continuation_checkout(
+        repository, default_branch, root
+    )
     before = core.run(["git", "rev-parse", "HEAD"], cwd=repo)
     core.require_success(before, "git_initial_head")
     initial_head = before["stdout"].strip()
@@ -185,7 +224,13 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
         proof_error = f"{type(exc).__name__}:{exc}"
 
     open_gaps = list(model["open_material_capabilities"])
-    if proof_error is not None or not proof["test_ok"] or not proof["build_ok"] or not proof["runtime_ok"] or deployment_result == "FAIL":
+    if (
+        proof_error is not None
+        or not proof["test_ok"]
+        or not proof["build_ok"]
+        or not proof["runtime_ok"]
+        or deployment_result == "FAIL"
+    ):
         status = "BROKEN"
     elif open_gaps:
         status = "INCOMPLETE"
@@ -252,7 +297,10 @@ def main() -> int:
         return 0
     except Exception as exc:
         print(
-            json.dumps({"status": "ERROR", "reason": f"{type(exc).__name__}:{exc}"}, sort_keys=True),
+            json.dumps(
+                {"status": "ERROR", "reason": f"{type(exc).__name__}:{exc}"},
+                sort_keys=True,
+            ),
             file=sys.stderr,
         )
         return 3

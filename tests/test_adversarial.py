@@ -4,14 +4,16 @@ import inspect
 import unittest
 import sys
 from pathlib import Path
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
+
 class AdversarialEliteTests(unittest.TestCase):
     def _load(self):
         errors = []
-        for name in ('mechanism', "src." + 'mechanism'):
+        for name in ("mechanism", "src." + "mechanism"):
             try:
                 return importlib.import_module(name)
             except Exception as e:
@@ -25,7 +27,7 @@ class AdversarialEliteTests(unittest.TestCase):
 
     def test_refuse_bad_import_path_does_not_shadow(self):
         with self.assertRaises(ModuleNotFoundError):
-            importlib.import_module("src.__elite_does_not_exist_" + 'mechanism')
+            importlib.import_module("src.__elite_does_not_exist_" + "mechanism")
 
     def test_central_mechanism_refuse_or_edge(self):
         """Exercise shipped refuse/edge paths when present; never crash open."""
@@ -38,14 +40,25 @@ class AdversarialEliteTests(unittest.TestCase):
                 continue
             # include re-exported central classes (not pure stdlib typing)
             mname = getattr(cls, "__module__", None) or ""
-            if mname.startswith("typing") or mname in {"builtins", "collections", "pathlib", "json", "sys", "os"}:
+            if mname.startswith("typing") or mname in {
+                "builtins",
+                "collections",
+                "pathlib",
+                "json",
+                "sys",
+                "os",
+            }:
                 continue
-            if getattr(mod, cname, None) is not cls and mname not in {mod.__name__, getattr(mod, "__package__", None)}:
+            if getattr(mod, cname, None) is not cls and mname not in {
+                mod.__name__,
+                getattr(mod, "__package__", None),
+            }:
                 continue
             try:
                 sig = inspect.signature(cls)
                 if any(
-                    p.default is inspect.Parameter.empty and p.name != "self"
+                    p.default is inspect.Parameter.empty
+                    and p.name != "self"
                     and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
                     for p in sig.parameters.values()
                 ):
@@ -64,7 +77,8 @@ class AdversarialEliteTests(unittest.TestCase):
                         if allowed is True:
                             self.assertTrue(
                                 out.get("human_approved") is True
-                                or out.get("status") in {"REFUSED", "DENIED", "ERROR", "UNKNOWN"},
+                                or out.get("status")
+                                in {"REFUSED", "DENIED", "ERROR", "UNKNOWN"},
                                 f"plan allowed unknown connector: {out!r}",
                             )
                         exercised = True
@@ -82,8 +96,10 @@ class AdversarialEliteTests(unittest.TestCase):
                 try:
                     ps = inspect.signature(fn)
                     req = [
-                        p for p in ps.parameters.values()
-                        if p.name != "self" and p.default is inspect.Parameter.empty
+                        p
+                        for p in ps.parameters.values()
+                        if p.name != "self"
+                        and p.default is inspect.Parameter.empty
                         and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
                     ]
                     if req:
@@ -147,8 +163,11 @@ class AdversarialEliteTests(unittest.TestCase):
             # last resort: public API still rejects nonsense attribute assignment theater
             public = [n for n in dir(mod) if not n.startswith("_")]
             self.assertGreater(len(public), 0)
-            with self.assertRaises((AttributeError, TypeError, ImportError, ValueError, KeyError)):
+            with self.assertRaises(
+                (AttributeError, TypeError, ImportError, ValueError, KeyError)
+            ):
                 getattr(mod, "__elite_missing_surface__")
+
 
 if __name__ == "__main__":
     unittest.main()

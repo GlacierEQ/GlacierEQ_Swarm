@@ -6,11 +6,11 @@ telemetry stream. It is intentionally transport-agnostic: a worker can be a
 local process, remote agent, MCP service, container, or human-backed executor
 as long as the adapter reports lifecycle events through this state machine.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
-import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Iterable, Mapping
@@ -154,7 +154,11 @@ class SwarmOrchestrator:
     ) -> dict[str, Any]:
         worker_id = _id(worker_id, "worker_id")
         caps = _capabilities(capabilities)
-        if not isinstance(max_concurrency, int) or isinstance(max_concurrency, bool) or max_concurrency <= 0:
+        if (
+            not isinstance(max_concurrency, int)
+            or isinstance(max_concurrency, bool)
+            or max_concurrency <= 0
+        ):
             raise ValueError("max_concurrency_invalid")
         if worker_id in self._workers:
             raise ValueError("worker_already_registered")
@@ -171,24 +175,42 @@ class SwarmOrchestrator:
             capabilities=sorted(caps),
             max_concurrency=max_concurrency,
         )
-        return {"status": "REGISTERED", "worker": worker.as_dict(), "event_digest": event["digest"]}
+        return {
+            "status": "REGISTERED",
+            "worker": worker.as_dict(),
+            "event_digest": event["digest"],
+        }
 
     register_worker = register_agent
 
     def heartbeat(self, worker_id: str, sequence: int) -> dict[str, Any]:
         worker = self._require_worker(worker_id)
-        if not isinstance(sequence, int) or isinstance(sequence, bool) or sequence <= worker.heartbeat_sequence:
+        if (
+            not isinstance(sequence, int)
+            or isinstance(sequence, bool)
+            or sequence <= worker.heartbeat_sequence
+        ):
             raise ValueError("heartbeat_sequence_not_monotonic")
         worker.heartbeat_sequence = sequence
         if worker.status is WorkerStatus.UNHEALTHY:
             worker.status = WorkerStatus.ACTIVE
-        event = self._event("WORKER_HEARTBEAT", worker_id=worker.worker_id, heartbeat_sequence=sequence)
-        return {"status": worker.status.value, "worker_id": worker.worker_id, "event_digest": event["digest"]}
+        event = self._event(
+            "WORKER_HEARTBEAT", worker_id=worker.worker_id, heartbeat_sequence=sequence
+        )
+        return {
+            "status": worker.status.value,
+            "worker_id": worker.worker_id,
+            "event_digest": event["digest"],
+        }
 
-    def set_worker_status(self, worker_id: str, status: WorkerStatus | str) -> dict[str, Any]:
+    def set_worker_status(
+        self, worker_id: str, status: WorkerStatus | str
+    ) -> dict[str, Any]:
         worker = self._require_worker(worker_id)
         try:
-            new_status = status if isinstance(status, WorkerStatus) else WorkerStatus(status)
+            new_status = (
+                status if isinstance(status, WorkerStatus) else WorkerStatus(status)
+            )
         except Exception as exc:
             raise ValueError("worker_status_invalid") from exc
         previous = worker.status
@@ -224,7 +246,11 @@ class SwarmOrchestrator:
             raise ValueError("task_already_exists")
         if not isinstance(priority, int) or isinstance(priority, bool):
             raise ValueError("priority_invalid")
-        if not isinstance(max_attempts, int) or isinstance(max_attempts, bool) or max_attempts <= 0:
+        if (
+            not isinstance(max_attempts, int)
+            or isinstance(max_attempts, bool)
+            or max_attempts <= 0
+        ):
             raise ValueError("max_attempts_invalid")
         payload_digest = _digest(payload)
         task = Task(
@@ -243,7 +269,11 @@ class SwarmOrchestrator:
             priority=priority,
             max_attempts=max_attempts,
         )
-        return {"status": task.status.value, "task": task.as_dict(), "event_digest": event["digest"]}
+        return {
+            "status": task.status.value,
+            "task": task.as_dict(),
+            "event_digest": event["digest"],
+        }
 
     def _candidate_workers(self, task: Task) -> list[Worker]:
         capable = [
@@ -252,7 +282,11 @@ class SwarmOrchestrator:
             if worker.available_slots > 0
             and task.required_capabilities.issubset(worker.capabilities)
         ]
-        fresh = [worker for worker in capable if worker.worker_id not in task.failed_worker_ids]
+        fresh = [
+            worker
+            for worker in capable
+            if worker.worker_id not in task.failed_worker_ids
+        ]
         candidates = fresh or capable
         return sorted(
             candidates,
@@ -265,7 +299,9 @@ class SwarmOrchestrator:
         )
 
     def dispatch(self, limit: int | None = None) -> dict[str, Any]:
-        if limit is not None and (not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0):
+        if limit is not None and (
+            not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0
+        ):
             raise ValueError("dispatch_limit_invalid")
         queued = sorted(
             (task for task in self._tasks.values() if task.status is TaskStatus.QUEUED),
@@ -304,7 +340,9 @@ class SwarmOrchestrator:
             "status": "DISPATCHED",
             "assignments": assignments,
             "unmatched_task_ids": unmatched,
-            "queued_remaining": sum(task.status is TaskStatus.QUEUED for task in self._tasks.values()),
+            "queued_remaining": sum(
+                task.status is TaskStatus.QUEUED for task in self._tasks.values()
+            ),
         }
 
     def assign_task(
@@ -316,24 +354,45 @@ class SwarmOrchestrator:
         max_attempts: int = 3,
     ) -> dict[str, Any]:
         """Convenience path: submit one task and immediately attempt dispatch."""
-        self.submit_task(task_id, required_capabilities, payload, priority, max_attempts)
+        self.submit_task(
+            task_id, required_capabilities, payload, priority, max_attempts
+        )
         dispatch = self.dispatch(limit=1)
         if dispatch["assignments"]:
             return {"status": "ASSIGNED", **dispatch["assignments"][0]}
-        return {"status": "QUEUED", "task_id": task_id, "reason": "no_capable_worker_available"}
+        return {
+            "status": "QUEUED",
+            "task_id": task_id,
+            "reason": "no_capable_worker_available",
+        }
 
     def start_task(self, task_id: str, worker_id: str) -> dict[str, Any]:
         task = self._require_task(task_id)
         worker = self._require_worker(worker_id)
-        if task.status is not TaskStatus.ASSIGNED or task.assigned_worker_id != worker.worker_id:
+        if (
+            task.status is not TaskStatus.ASSIGNED
+            or task.assigned_worker_id != worker.worker_id
+        ):
             raise ValueError("task_assignment_mismatch")
         if task.task_id not in worker.active_tasks:
             raise ValueError("worker_assignment_state_corrupt")
         task.status = TaskStatus.RUNNING
-        event = self._event("TASK_STARTED", task_id=task.task_id, worker_id=worker.worker_id, attempt=task.attempts)
-        return {"status": task.status.value, "task_id": task.task_id, "worker_id": worker.worker_id, "event_digest": event["digest"]}
+        event = self._event(
+            "TASK_STARTED",
+            task_id=task.task_id,
+            worker_id=worker.worker_id,
+            attempt=task.attempts,
+        )
+        return {
+            "status": task.status.value,
+            "task_id": task.task_id,
+            "worker_id": worker.worker_id,
+            "event_digest": event["digest"],
+        }
 
-    def complete_task(self, task_id: str, worker_id: str, result: Any) -> dict[str, Any]:
+    def complete_task(
+        self, task_id: str, worker_id: str, result: Any
+    ) -> dict[str, Any]:
         task = self._require_task(task_id)
         worker = self._require_worker(worker_id)
         self._require_owned_active_task(task, worker)
@@ -351,7 +410,12 @@ class SwarmOrchestrator:
             attempt=task.attempts,
             result_digest=result_digest,
         )
-        return {"status": task.status.value, "task_id": task.task_id, "result_digest": result_digest, "event_digest": event["digest"]}
+        return {
+            "status": task.status.value,
+            "task_id": task.task_id,
+            "result_digest": result_digest,
+            "event_digest": event["digest"],
+        }
 
     def fail_task(self, task_id: str, worker_id: str, error: str) -> dict[str, Any]:
         task = self._require_task(task_id)
@@ -399,7 +463,11 @@ class SwarmOrchestrator:
     def drain_worker(self, worker_id: str) -> dict[str, Any]:
         worker = self._require_worker(worker_id)
         worker.status = WorkerStatus.DRAINING
-        event = self._event("WORKER_DRAINING", worker_id=worker.worker_id, active_tasks=sorted(worker.active_tasks))
+        event = self._event(
+            "WORKER_DRAINING",
+            worker_id=worker.worker_id,
+            active_tasks=sorted(worker.active_tasks),
+        )
         return {
             "status": worker.status.value,
             "worker_id": worker.worker_id,
@@ -411,7 +479,9 @@ class SwarmOrchestrator:
         worker = self._require_worker(worker_id)
         recovered = self._recover_worker_tasks(worker)
         worker.status = WorkerStatus.OFFLINE
-        event = self._event("WORKER_UNREGISTERED", worker_id=worker.worker_id, requeued_tasks=recovered)
+        event = self._event(
+            "WORKER_UNREGISTERED", worker_id=worker.worker_id, requeued_tasks=recovered
+        )
         return {
             "status": worker.status.value,
             "worker_id": worker.worker_id,
@@ -436,7 +506,10 @@ class SwarmOrchestrator:
     def _require_owned_active_task(self, task: Task, worker: Worker) -> None:
         if task.status not in {TaskStatus.ASSIGNED, TaskStatus.RUNNING}:
             raise ValueError("task_not_active")
-        if task.assigned_worker_id != worker.worker_id or task.task_id not in worker.active_tasks:
+        if (
+            task.assigned_worker_id != worker.worker_id
+            or task.task_id not in worker.active_tasks
+        ):
             raise ValueError("task_assignment_mismatch")
 
     def get_status(self) -> dict[str, Any]:
@@ -446,10 +519,19 @@ class SwarmOrchestrator:
         task_status = {status.value: 0 for status in TaskStatus}
         for task in self._tasks.values():
             task_status[task.status.value] += 1
-        capacity = sum(worker.max_concurrency for worker in self._workers.values() if worker.status is WorkerStatus.ACTIVE)
+        capacity = sum(
+            worker.max_concurrency
+            for worker in self._workers.values()
+            if worker.status is WorkerStatus.ACTIVE
+        )
         active = sum(len(worker.active_tasks) for worker in self._workers.values())
         return {
-            "status": "HEALTHY" if all(worker.status is not WorkerStatus.UNHEALTHY for worker in self._workers.values()) else "DEGRADED",
+            "status": "HEALTHY"
+            if all(
+                worker.status is not WorkerStatus.UNHEALTHY
+                for worker in self._workers.values()
+            )
+            else "DEGRADED",
             "agents": len(self._workers),
             "worker_status": worker_status,
             "jobs": len(self._tasks),
@@ -463,9 +545,15 @@ class SwarmOrchestrator:
     swarm_status = get_status
 
     def telemetry(self, after_sequence: int = 0) -> list[dict[str, Any]]:
-        if not isinstance(after_sequence, int) or isinstance(after_sequence, bool) or after_sequence < 0:
+        if (
+            not isinstance(after_sequence, int)
+            or isinstance(after_sequence, bool)
+            or after_sequence < 0
+        ):
             raise ValueError("after_sequence_invalid")
-        return [dict(event) for event in self._events if event["sequence"] > after_sequence]
+        return [
+            dict(event) for event in self._events if event["sequence"] > after_sequence
+        ]
 
     def verify_telemetry(self) -> dict[str, Any]:
         previous = "0" * 64
@@ -504,17 +592,34 @@ class SwarmOrchestrator:
 
     @classmethod
     def from_snapshot(cls, payload: Mapping[str, Any]) -> "SwarmOrchestrator":
-        if not isinstance(payload, Mapping) or payload.get("schema") != "glaciereq.swarm-orchestrator.v1":
+        if (
+            not isinstance(payload, Mapping)
+            or payload.get("schema") != "glaciereq.swarm-orchestrator.v1"
+        ):
             raise ValueError("snapshot_schema_invalid")
         supplied_digest = payload.get("snapshot_digest")
-        core = {key: payload.get(key) for key in ("schema", "workers", "tasks", "events", "event_head", "sequence")}
+        core = {
+            key: payload.get(key)
+            for key in (
+                "schema",
+                "workers",
+                "tasks",
+                "events",
+                "event_head",
+                "sequence",
+            )
+        }
         if supplied_digest != _digest(core):
             raise ValueError("snapshot_digest_invalid")
         orchestrator = cls()
         workers = payload.get("workers")
         tasks = payload.get("tasks")
         events = payload.get("events")
-        if not isinstance(workers, list) or not isinstance(tasks, list) or not isinstance(events, list):
+        if (
+            not isinstance(workers, list)
+            or not isinstance(tasks, list)
+            or not isinstance(events, list)
+        ):
             raise ValueError("snapshot_collections_invalid")
         for raw in workers:
             worker = Worker(
@@ -534,7 +639,9 @@ class SwarmOrchestrator:
         for raw in tasks:
             task = Task(
                 task_id=_id(raw.get("task_id"), "task_id"),
-                required_capabilities=_capabilities(raw.get("required_capabilities") or []),
+                required_capabilities=_capabilities(
+                    raw.get("required_capabilities") or []
+                ),
                 payload_digest=str(raw.get("payload_digest") or ""),
                 priority=int(raw.get("priority", 0)),
                 max_attempts=int(raw.get("max_attempts", 0)),

@@ -8,6 +8,7 @@ Usage:
   python3 ~/GlacierEQ_Swarm/automations/voice-memo-stage-c-queue-flipper.py
   python3 ... --top 30 --min-sec 5 --max-sec 600
 """
+
 from __future__ import annotations
 
 import argparse
@@ -94,7 +95,14 @@ def main() -> int:
 
     recs = load_intake()
     if not recs:
-        print(json.dumps({"ok": False, "error": "no intake — run voice-memo-stage-a-flipper first"}))
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": "no intake — run voice-memo-stage-a-flipper first",
+                }
+            )
+        )
         return 1
 
     aeon = aeon_tokens()
@@ -114,7 +122,9 @@ def main() -> int:
                 "aeon_matched": r.get("file_id") in aeon,
                 "priority_score": round(score(r, aeon), 2),
                 "stt_status": "queued_blocked_no_whisper",
-                "privacy": "legal_private" if r.get("file_id") in aeon else "private_default",
+                "privacy": "legal_private"
+                if r.get("file_id") in aeon
+                else "private_default",
             }
         )
     ranked.sort(key=lambda x: (-x["priority_score"], x["duration_seconds"]))

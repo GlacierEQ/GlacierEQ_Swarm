@@ -12,6 +12,7 @@ This wrapper therefore:
 3. accepts truthful repository outcome statuses as a successful transport;
 4. exits non-zero only when the worker did not produce a valid work-unit result.
 """
+
 from __future__ import annotations
 
 import json
@@ -61,7 +62,10 @@ def _parse_single_object(stdout: str) -> dict[str, Any]:
 def main() -> int:
     task_bytes = sys.stdin.buffer.read()
     if not task_bytes.strip():
-        print(json.dumps({"status": "ERROR", "reason": "task_payload_empty"}), file=sys.stderr)
+        print(
+            json.dumps({"status": "ERROR", "reason": "task_payload_empty"}),
+            file=sys.stderr,
+        )
         return 3
     try:
         # Validate transport input before forwarding it. The child performs the

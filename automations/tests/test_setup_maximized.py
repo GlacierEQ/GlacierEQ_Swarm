@@ -3,6 +3,7 @@
 
 No theater: imports real modules, runs real functions, asserts durable outputs.
 """
+
 from __future__ import annotations
 
 import importlib.util
@@ -47,13 +48,17 @@ class TestAgentsMonolith(unittest.TestCase):
 
 class TestDeviceStabilityFlipper(unittest.TestCase):
     def test_free_kb_returns_positive_int(self):
-        mod = load_module("device_stability_flipper", AUTO / "device-stability-flipper.py")
+        mod = load_module(
+            "device_stability_flipper", AUTO / "device-stability-flipper.py"
+        )
         kb = mod.free_kb()
         self.assertIsInstance(kb, int)
         self.assertGreater(kb, 0)
 
     def test_main_writes_structured_snapshot(self):
-        mod = load_module("device_stability_flipper", AUTO / "device-stability-flipper.py")
+        mod = load_module(
+            "device_stability_flipper", AUTO / "device-stability-flipper.py"
+        )
         # Run shipped main()
         mod.main()
         out = Path(mod.OUT)

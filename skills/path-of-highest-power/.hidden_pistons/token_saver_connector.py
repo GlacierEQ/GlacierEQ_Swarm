@@ -9,6 +9,7 @@ Modes:
 Distributed cognition: heavy work routes to zero-LLM flippers / local tools, not chat context.
 Truth: measure bytes_in vs bytes_out; never invent %.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -175,7 +176,9 @@ def process_file(path: str | Path, mode: str = "pure_pointer") -> dict[str, Any]
     return rec
 
 
-def microwave_batch(paths: list[str | Path], mode: str = "pure_pointer", max_workers: int = 4) -> list[dict]:
+def microwave_batch(
+    paths: list[str | Path], mode: str = "pure_pointer", max_workers: int = 4
+) -> list[dict]:
     """Parallel hyperspeed batch (MICROWAVE piston pattern) — local threads, zero LLM."""
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
@@ -209,7 +212,9 @@ def append_ledger(records: list[dict], meta: dict | None = None) -> Path:
         },
     }
     tin = run["totals"]["bytes_in"]
-    run["totals"]["savings_pct"] = round(100 * run["totals"]["bytes_saved"] / tin, 2) if tin else 0.0
+    run["totals"]["savings_pct"] = (
+        round(100 * run["totals"]["bytes_saved"] / tin, 2) if tin else 0.0
+    )
     ledger.setdefault("runs", []).append(run)
     # keep last 50 runs
     ledger["runs"] = ledger["runs"][-50:]
@@ -228,7 +233,9 @@ if __name__ == "__main__":
     for mode in ("compress", "essence", "pure_pointer"):
         out = apply_token_saver(sample, mode=mode)
         m = measure_savings(sample, out)
-        print(f"mode={mode} in={m['bytes_in']} out={m['bytes_out']} saved={m['bytes_saved']} pct={m['savings_pct']}")
+        print(
+            f"mode={mode} in={m['bytes_in']} out={m['bytes_out']} saved={m['bytes_saved']} pct={m['savings_pct']}"
+        )
         print("  preview:", out[:100])
     print("routes:", list(COMPUTE_ROUTES))
     print("rules_len:", len(rules))

@@ -4,6 +4,7 @@
 Runs local flippers only (no app kills). Writes state/akos_echo_maximize_last.json.
 Stdout: dense summary (token-saver).
 """
+
 from __future__ import annotations
 
 import json
@@ -188,11 +189,17 @@ def main() -> int:
     if health.get("token_measure"):
         tm = health["token_measure"]
         # various shapes
-        pct = tm.get("savings_pct") or tm.get("pct") or (tm.get("totals") or {}).get("savings_pct")
+        pct = (
+            tm.get("savings_pct")
+            or tm.get("pct")
+            or (tm.get("totals") or {}).get("savings_pct")
+        )
         print(f"token_savings_pct={pct}")
     print(f"ptr: {OUT}")
     print(f"echo: {health['ptrs']['echo']}")
-    ok = bool(health.get("doctor_ok")) and token.get("ok") and health["skills"].get("ok")
+    ok = (
+        bool(health.get("doctor_ok")) and token.get("ok") and health["skills"].get("ok")
+    )
     return 0 if ok else 1
 
 

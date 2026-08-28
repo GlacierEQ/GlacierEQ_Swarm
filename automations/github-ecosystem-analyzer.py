@@ -2,6 +2,7 @@
 """Real flipper: Load ecosystem_map.json, produce pointer-based analysis.
 Uses pro-code rules: pointers, no full dumps. Writes durable state.
 """
+
 import json
 import os
 from datetime import datetime, timezone
@@ -33,9 +34,13 @@ def analyze():
         result["private_hot"] = m.get("private_hot", [])
         result["last_daily_run"] = m.get("last_daily_run")
         print(f"Anchored {pubs} public + private signals from map (see {MAP_P})")
-        print(f"Themes: {themes} (pro-code, colossus, mastermind, MCPs, legal, memory, spacex)")
+        print(
+            f"Themes: {themes} (pro-code, colossus, mastermind, MCPs, legal, memory, spacex)"
+        )
         print("Pointers only: raw MCP in state/daily_scratch/ when present")
-        print("For qualification: map to path-of-highest-power (pistons for workers, token-saver for efficiency)")
+        print(
+            "For qualification: map to path-of-highest-power (pistons for workers, token-saver for efficiency)"
+        )
     except Exception as e:
         result["error"] = str(e)
         print(f"Map error (ptr to {MAP_P}): {e}")

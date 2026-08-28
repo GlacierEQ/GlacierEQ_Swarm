@@ -6,6 +6,7 @@ Usage:
   python3 ~/GlacierEQ_Swarm/automations/voice-memo-stage-a-flipper.py
   python3 ... --root /path/to/memos --limit 10
 """
+
 from __future__ import annotations
 
 import argparse
@@ -82,8 +83,12 @@ def process_one(p: Path, intake: Path) -> dict:
         "resolved_path": str(resolved),
         "file_extension": ".m4a",
         "file_size_bytes": st.st_size,
-        "created_at_filesystem": datetime.fromtimestamp(st.st_ctime, timezone.utc).isoformat(),
-        "modified_at_filesystem": datetime.fromtimestamp(st.st_mtime, timezone.utc).isoformat(),
+        "created_at_filesystem": datetime.fromtimestamp(
+            st.st_ctime, timezone.utc
+        ).isoformat(),
+        "modified_at_filesystem": datetime.fromtimestamp(
+            st.st_mtime, timezone.utc
+        ).isoformat(),
         "import_method": "symlink_Organized_Voice_Memos→VoiceMemos.shared/Recordings",
         "device_source": "Apple Voice Memos (macOS Group Container)",
         "icloud_source": "unknown",
@@ -149,8 +154,12 @@ def main() -> int:
         "total_duration_hours": round(total_sec / 3600, 2),
         "duration_known": len(durs),
         "by_year": by_year,
-        "tiny_files_under_50kb": sum(1 for r in records if (r.get("file_size_bytes") or 0) < 50_000),
-        "duration_under_1s": sum(1 for r in records if (r.get("duration_seconds") or 1) < 1.0),
+        "tiny_files_under_50kb": sum(
+            1 for r in records if (r.get("file_size_bytes") or 0) < 50_000
+        ),
+        "duration_under_1s": sum(
+            1 for r in records if (r.get("duration_seconds") or 1) < 1.0
+        ),
         "stage_c_stt": "blocked_no_whisper",
         "intake_dir": str(intake),
     }

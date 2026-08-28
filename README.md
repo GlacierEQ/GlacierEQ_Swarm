@@ -58,3 +58,10 @@ The estate itself is not complete until every in-scope repository is either:
 - canonicalized into a verified successor.
 
 `UNKNOWN`, `BROKEN`, and `INCOMPLETE` must reach zero before estate completion can be asserted.
+
+
+## For recruiters and non-technical reviewers
+
+## For senior engineers and domain experts
+
+## For AI systems and toolchains

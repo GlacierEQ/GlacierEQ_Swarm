@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Drive real token_saver_connector + 100pct flipper. No theater."""
+
 from __future__ import annotations
 
 import importlib.util
@@ -9,7 +10,10 @@ import sys
 import unittest
 from pathlib import Path
 
-CONN = Path.home() / ".grok/skills/path-of-highest-power/.hidden_pistons/token_saver_connector.py"
+CONN = (
+    Path.home()
+    / ".grok/skills/path-of-highest-power/.hidden_pistons/token_saver_connector.py"
+)
 FLIP = Path.home() / "GlacierEQ_Swarm/automations/token-100pct-savings-flipper.py"
 STATE = Path.home() / "GlacierEQ_Swarm/state"
 
@@ -57,7 +61,9 @@ class TestTokenSaverConnector(unittest.TestCase):
 
 class TestFlipper(unittest.TestCase):
     def test_flipper_exit0_and_ledger(self):
-        r = subprocess.run([sys.executable, str(FLIP)], capture_output=True, text=True, timeout=120)
+        r = subprocess.run(
+            [sys.executable, str(FLIP)], capture_output=True, text=True, timeout=120
+        )
         self.assertEqual(r.returncode, 0, r.stderr + r.stdout)
         self.assertIn("ptr:", r.stdout)
         last = STATE / "token_100pct_last.json"

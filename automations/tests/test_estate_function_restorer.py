@@ -19,7 +19,9 @@ class EstateFunctionRestorerTests(unittest.TestCase):
     def test_scaffold_markers_fail_visible(self):
         with tempfile.TemporaryDirectory() as td:
             repo = Path(td)
-            (repo / "README.md").write_text("## Current scaffold state\n", encoding="utf-8")
+            (repo / "README.md").write_text(
+                "## Current scaffold state\n", encoding="utf-8"
+            )
             self.assertTrue(restorer.scaffold_evidence(repo))
 
     def test_source_hash_changes_with_real_source(self):
@@ -62,7 +64,13 @@ def test_rejects_invalid_payload(): pass
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / "priority.json"
             path.write_text(
-                json.dumps({"repositories": [{"repository": "GlacierEQ/openai-tool-authority-matrix"}]}),
+                json.dumps(
+                    {
+                        "repositories": [
+                            {"repository": "GlacierEQ/openai-tool-authority-matrix"}
+                        ]
+                    }
+                ),
                 encoding="utf-8",
             )
             self.assertEqual(
@@ -86,7 +94,10 @@ def test_rejects_invalid_payload(): pass
             pushed_at="",
         )
         priority = {target.name}
-        self.assertLess(restorer.target_priority(target, priority), restorer.target_priority(other, priority))
+        self.assertLess(
+            restorer.target_priority(target, priority),
+            restorer.target_priority(other, priority),
+        )
 
 
 if __name__ == "__main__":

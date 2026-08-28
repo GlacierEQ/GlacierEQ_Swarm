@@ -4,6 +4,7 @@
 Writes state/toolbelt_doctor_last.json · stdout = summary only (token-saver).
 Exit 0 if healthy (no critical failures); 1 if critical missing.
 """
+
 from __future__ import annotations
 
 import ast
@@ -22,7 +23,12 @@ BUNDLED = HOME / ".grok" / "bundled" / "skills"
 TOOLBELT = HOME / "GlacierEQ_Swarm" / "toolbelt"
 OUT = STATE / "toolbelt_doctor_last.json"
 
-CORE_SKILLS = ("token-saver", "swarm-orchestrator", "path-of-highest-power", "repo-indexer")
+CORE_SKILLS = (
+    "token-saver",
+    "swarm-orchestrator",
+    "path-of-highest-power",
+    "repo-indexer",
+)
 FLIPPERS = (
     "token-100pct-savings-flipper.py",
     "device-stability-flipper.py",
@@ -77,7 +83,9 @@ def check_skill_dirs(root: Path) -> list[dict]:
                 }
             )
         else:
-            rows.append({"id": d.name, "ok": False, "error": "no SKILL.md", "tier": "broken"})
+            rows.append(
+                {"id": d.name, "ok": False, "error": "no SKILL.md", "tier": "broken"}
+            )
     return rows
 
 
@@ -96,13 +104,22 @@ def check_flippers() -> list[dict]:
             with tempfile.NamedTemporaryFile(suffix=".pyc", delete=True) as tf:
                 py_compile.compile(str(p), cfile=tf.name, doraise=True)
             row["ok"] = True
-            row["has_main"] = '__name__ == "__main__"' in p.read_text() or "__main__" in p.read_text()
+            row["has_main"] = (
+                '__name__ == "__main__"' in p.read_text() or "__main__" in p.read_text()
+            )
         except Exception as e:
             row["error"] = str(e)[:200]
         rows.append(row)
     # stray tests in automations root?
     for p in AUTO.glob("test_*.py"):
-        rows.append({"id": p.name, "ok": False, "error": "test in flipper root; move to tests/", "tier": "misplaced"})
+        rows.append(
+            {
+                "id": p.name,
+                "ok": False,
+                "error": "test in flipper root; move to tests/",
+                "tier": "misplaced",
+            }
+        )
     return rows
 
 
@@ -126,7 +143,11 @@ def check_hire() -> list[dict]:
 
 
 def check_agents() -> dict:
-    for p in (HOME / ".grok" / "Agents.md", HOME / "AGENTS.md", HOME / ".grok" / "AGENTS.md"):
+    for p in (
+        HOME / ".grok" / "Agents.md",
+        HOME / "AGENTS.md",
+        HOME / ".grok" / "AGENTS.md",
+    ):
         if p.is_file() or p.is_symlink():
             t = p.read_text(errors="ignore")
             return {
@@ -169,7 +190,11 @@ def main() -> int:
             "skills_total": len(skills),
             "bundled_ok": sum(1 for s in bundled if s.get("ok")),
             "bundled_total": len(bundled),
-            "flippers_ok": sum(1 for f in flippers if f.get("ok") and "misplaced" not in str(f.get("error", ""))),
+            "flippers_ok": sum(
+                1
+                for f in flippers
+                if f.get("ok") and "misplaced" not in str(f.get("error", ""))
+            ),
             "flippers_total": len([f for f in flippers if f["id"] in FLIPPERS]),
             "hire_ok": sum(1 for h in hire if h.get("ok")),
         },
