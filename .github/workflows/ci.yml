@@ -52,10 +52,12 @@ jobs:
         run: python -m unittest automations/tests/test_estate_function_restorer.py -v
       - name: Prove safe estate-restorer transport steering
         run: python -m unittest tests/test_estate_restorer_source_transport.py -v
-      - name: Refuse force-push regression in active crystallization worker
+      - name: Refuse force-push regression in active repair transports
         run: |
-          if grep -n -- '--force-with-lease\|--force' automations/crystallization_repo_worker.py; then
-            echo "active crystallization worker contains forbidden force-push transport" >&2
+          if grep -n -- '--force-with-lease\|--force' \
+            automations/crystallization_repo_worker.py \
+            automations/estate_function_restorer.py; then
+            echo "active repair transport contains forbidden force-push semantics" >&2
             exit 1
           fi
       - name: Enforce public truth boundary
