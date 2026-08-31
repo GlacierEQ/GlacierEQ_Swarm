@@ -38,12 +38,12 @@ python -m unittest automations/tests/test_estate_function_restorer.py -v \
 python -m unittest tests/test_estate_restorer_source_transport.py -v \
   2>&1 | tee "$ARTIFACTS/restorer-source-transport-tests.log"
 
-# Static anti-regression: the active crystallization worker itself must not
-# contain a force-push option. The legacy raw restorer is allowed to retain the
-# intercepted call site until its implementation is fully folded into the safe
-# interface, but the safe shell test above proves that interface rewrites it.
-if grep -n -- '--force-with-lease\|--force' automations/crystallization_repo_worker.py; then
-  echo "active crystallization worker contains a forbidden force-push option" >&2
+# Static anti-regression: neither active repair transport may contain a
+# force-push option. Source-preserving transmission is native in both engines.
+if grep -n -- '--force-with-lease\|--force' \
+  automations/crystallization_repo_worker.py \
+  automations/estate_function_restorer.py; then
+  echo "active repair transport contains a forbidden force-push option" >&2
   exit 1
 fi
 
