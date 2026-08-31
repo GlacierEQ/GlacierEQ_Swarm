@@ -25,6 +25,7 @@ import shutil
 import subprocess
 import sys
 import textwrap
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -209,19 +210,194 @@ def ensure_checkout(target: RepoTarget, root: Path) -> Path:
     return repo
 
 
+def _slug(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]+", "-", value).strip("-")[:64]
+
+
+_TRANSPORT_RECEIPTS: list[dict] = []
+_TRANSPORT_LOCK = threading.Lock()
+
+
 def repair_branch_name(repo_name: str) -> str:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
-    slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", repo_name).strip("-")[:48]
-    return f"restore/function-{stamp}-{slug}"
+    """Stable continuation identity for verified function restoration."""
+    return f"restore/function-{_slug(repo_name)}"
+
+
+def checkpoint_branch(branch: str, source_sha: str) -> str:
+    if not re.fullmatch(r"[0-9a-f]{40}", source_sha):
+        raise ValueError("checkpoint_source_sha_invalid")
+    name = branch.removeprefix("restore/function-")
+    return f"restore-checkpoints/{_slug(name)}/{source_sha[:12]}"
+
+
+def _remote_head(repo: Path, branch: str) -> str | None:
+    result = run(
+        ["git", "ls-remote", "--heads", "origin", f"refs/heads/{branch}"],
+        cwd=repo,
+        timeout=120,
+        check=True,
+    )
+    line = result.stdout.strip()
+    if not line:
+        return None
+    value = line.split()[0]
+    if not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise RuntimeError("remote_head_invalid")
+    return value
+
+
+def _local_branch_head(repo: Path, branch: str) -> str | None:
+    exists = run(
+        ["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"],
+        cwd=repo,
+        timeout=30,
+        check=False,
+    )
+    if exists.returncode != 0:
+        return None
+    value = run(["git", "rev-parse", branch], cwd=repo, timeout=30, check=True).stdout.strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise RuntimeError("local_branch_head_invalid")
+    return value
+
+
+def _head(repo: Path) -> str:
+    value = run(["git", "rev-parse", "HEAD"], cwd=repo, timeout=30, check=True).stdout.strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise RuntimeError("local_head_invalid")
+    return value
+
+
+def _is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
+    return run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=repo,
+        timeout=60,
+        check=False,
+    ).returncode == 0
+
+
+def _latest_legacy_remote(repo: Path, repo_name: str) -> tuple[str, str] | None:
+    slug = _slug(repo_name)
+    result = run(
+        [
+            "git", "for-each-ref",
+            "--format=%(refname:short) %(objectname)",
+            f"refs/remotes/origin/restore/function-*-{slug}",
+        ],
+        cwd=repo,
+        timeout=60,
+        check=True,
+    )
+    pattern = re.compile(
+        rf"^origin/(restore/function-(\d{{8}})-{re.escape(slug)}) ([0-9a-f]{{40}})$"
+    )
+    found: list[tuple[str, str]] = []
+    for line in result.stdout.splitlines():
+        match = pattern.match(line.strip())
+        if match:
+            found.append((match.group(1), match.group(3)))
+    if not found:
+        return None
+    found.sort(key=lambda row: row[0])
+    return found[-1]
 
 
 def prepare_branch(repo: Path, target: RepoTarget) -> str:
+    """Continue verified gain; never delete or reset useful repair history."""
     branch = repair_branch_name(target.name)
-    existing = run(["git", "branch", "--list", branch], cwd=repo, timeout=30, check=True)
-    if existing.stdout.strip():
-        run(["git", "branch", "-D", branch], cwd=repo, timeout=30, check=True)
-    run(["git", "checkout", "-b", branch, f"origin/{target.default_branch}"], cwd=repo, timeout=60, check=True)
-    return branch
+    remote = _remote_head(repo, branch)
+    legacy_remote = None if remote else _latest_legacy_remote(repo, target.name)
+    start = remote or (legacy_remote[1] if legacy_remote else None)
+    if start is None:
+        start = _remote_head(repo, target.default_branch)
+    if start is None:
+        raise RuntimeError("repair_default_branch_missing")
+
+    local = _local_branch_head(repo, branch)
+    if local is None:
+        run(["git", "checkout", "-b", branch, start], cwd=repo, timeout=60, check=True)
+        return branch
+    if local == start:
+        run(["git", "checkout", branch], cwd=repo, timeout=60, check=True)
+        return branch
+    if _is_ancestor(repo, start, local):
+        run(["git", "checkout", branch], cwd=repo, timeout=60, check=True)
+        return branch
+    if _is_ancestor(repo, local, start):
+        run(["git", "checkout", branch], cwd=repo, timeout=60, check=True)
+        run(["git", "merge", "--ff-only", start], cwd=repo, timeout=60, check=True)
+        return branch
+    raise RuntimeError("repair_local_remote_diverged_refusing_reset")
+
+
+def _record_transport(receipt: dict) -> None:
+    with _TRANSPORT_LOCK:
+        _TRANSPORT_RECEIPTS.append(receipt)
+
+
+def _checkpoint(repo: Path, branch: str, remote_sha: str) -> str:
+    checkpoint = checkpoint_branch(branch, remote_sha)
+    existing = _remote_head(repo, checkpoint)
+    if existing:
+        if existing != remote_sha:
+            raise RuntimeError("repair_checkpoint_collision")
+        return checkpoint
+    run(
+        ["git", "push", "origin", f"{remote_sha}:refs/heads/{checkpoint}"],
+        cwd=repo,
+        timeout=600,
+        check=True,
+    )
+    if _remote_head(repo, checkpoint) != remote_sha:
+        raise RuntimeError("repair_checkpoint_readback_mismatch")
+    return checkpoint
+
+
+def push_repair_branch(repo: Path, branch: str) -> dict:
+    """Push only descendant history, preserve prior remote head, and read it back."""
+    local_sha = _head(repo)
+    remote_before = _remote_head(repo, branch)
+    checkpoint = None
+    if remote_before:
+        checkpoint = _checkpoint(repo, branch, remote_before)
+        if not _is_ancestor(repo, remote_before, local_sha):
+            receipt = {
+                "schema": "glaciereq.estate-function-repair-transport.v2",
+                "state": "DIVERGENCE_REFUSED",
+                "branch": branch,
+                "remote_before": remote_before,
+                "local_head": local_sha,
+                "checkpoint_branch": checkpoint,
+                "force_push": False,
+                "observed_at": now(),
+            }
+            _record_transport(receipt)
+            raise RuntimeError("repair_remote_diverged_refusing_force_push")
+
+    run(
+        ["git", "push", "-u", "origin", f"HEAD:refs/heads/{branch}"],
+        cwd=repo,
+        timeout=600,
+        check=True,
+    )
+    remote_after = _remote_head(repo, branch)
+    if remote_after != local_sha:
+        raise RuntimeError("repair_remote_readback_mismatch")
+    receipt = {
+        "schema": "glaciereq.estate-function-repair-transport.v2",
+        "state": "PUSHED_AND_READ_BACK",
+        "branch": branch,
+        "remote_before": remote_before,
+        "remote_after": remote_after,
+        "local_head": local_sha,
+        "checkpoint_branch": checkpoint,
+        "force_push": False,
+        "push_mode": "NORMAL_DESCENDANT_ONLY",
+        "observed_at": now(),
+    }
+    _record_transport(receipt)
+    return receipt
 
 
 def native_evidence_paths(repo: Path) -> list[str]:
@@ -620,7 +796,7 @@ def repair_one(
 
         pr_url = None
         if push:
-            run(["git", "push", "-u", "origin", branch, "--force-with-lease"], cwd=repo, timeout=600, check=True)
+            push_repair_branch(repo, branch)
             if open_pr:
                 pr_url = create_pr(repo, target, branch)
 
@@ -654,6 +830,11 @@ def save_run(results: list[RepairResult]) -> Path:
         "schema": "glaciereq.estate-function-repair-run.v1",
         "generated_at": now(),
         "results": [asdict(r) for r in results],
+        "transport": {
+            "schema": "glaciereq.estate-function-repair-transport-run.v2",
+            "force_push_count": 0,
+            "receipts": list(_TRANSPORT_RECEIPTS),
+        },
         "summary": {
             "total": len(results),
             "repaired_verified": sum(r.status == "REPAIRED_VERIFIED" for r in results),
