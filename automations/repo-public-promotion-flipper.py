@@ -91,7 +91,7 @@ identity, lifecycle, priority, visibility, roadmap, product direction, or truth.
 - Shared AKOS / Pro-Code / ECHO references may be reused when they strengthen the
   Operator-selected objective.
 - Repository-specific implementation and evidence remain local to their proper sources.
-- Historical central-bridge, canonical-truth, or `do not fork truth` language is
+- Historical central-bridge, single-authority, or legacy-lock language is
   provenance only, not current policy.
 
 AKOS reference: https://github.com/GlacierEQ/AKOS
