@@ -1,18 +1,12 @@
 #!/usr/bin/env python3
 """Resumable one-repository CRYSTALLIZATION-MANDATE work unit.
 
-Unlike the first repository-worker transport, this executable makes repository
-truth and process health separate by construction:
-
-- valid work-unit outcomes (CRYSTALLIZED / INCOMPLETE / BROKEN / etc.) exit 0;
+Repository truth and transport health are separate by construction:
+- valid outcomes (CRYSTALLIZED / INCOMPLETE / BROKEN / etc.) exit 0;
 - protocol/infrastructure failures exit non-zero;
-- repeated generations continue the existing remote crystallization branch
-  instead of resetting to default-branch ancestry and erasing earlier gains.
-
-The implementation command remains operator-controlled through
-`CRYSTALLIZATION_IMPLEMENTER_CMD`.
+- generations continue the stable remote crystallization branch;
+- the shared transport preserves prior remote heads and refuses history rewrite.
 """
-
 from __future__ import annotations
 
 import json
@@ -24,86 +18,17 @@ from typing import Any, Mapping
 import crystallization_repo_worker as core
 
 VALID_OUTCOMES = {
-    "UNKNOWN",
-    "DISCOVERED",
-    "UNDERSTOOD",
-    "BROKEN",
-    "INCOMPLETE",
-    "FUNCTIONAL",
-    "COMPLETE",
-    "DEPLOYED",
-    "CRYSTALLIZED",
-    "CANONICALIZED_SUCCESSOR",
-    "INTENTIONALLY_ARCHIVED",
+    "UNKNOWN", "DISCOVERED", "UNDERSTOOD", "BROKEN", "INCOMPLETE",
+    "FUNCTIONAL", "COMPLETE", "DEPLOYED", "CRYSTALLIZED",
+    "CANONICALIZED_SUCCESSOR", "INTENTIONALLY_ARCHIVED",
 }
-
-
-def _remote_branch_exists(repo: Path, branch: str) -> bool:
-    result = core.run(
-        ["git", "ls-remote", "--exit-code", "--heads", "origin", branch],
-        cwd=repo,
-        timeout=120,
-    )
-    return result["returncode"] == 0 and bool(result["stdout"].strip())
 
 
 def ensure_continuation_checkout(
     repository: str, default_branch: str, root: Path
 ) -> tuple[Path, str, str]:
-    name = repository.split("/", 1)[1]
-    repo = root / name
-    root.mkdir(parents=True, exist_ok=True)
-    if repo.exists():
-        if not (repo / ".git").is_dir():
-            raise RuntimeError("workspace_path_not_git_repo")
-        status = core.run(["git", "status", "--porcelain"], cwd=repo, timeout=60)
-        core.require_success(status, "git_status")
-        if status["stdout"].strip():
-            raise RuntimeError("workspace_dirty_refusing_to_overwrite")
-        core.require_success(
-            core.run(["git", "fetch", "origin", "--prune"], cwd=repo, timeout=900),
-            "git_fetch",
-        )
-    else:
-        core.require_success(
-            core.run(["gh", "repo", "clone", repository, str(repo)], timeout=1200),
-            "gh_clone",
-        )
-        core.require_success(
-            core.run(["git", "fetch", "origin", "--prune"], cwd=repo, timeout=900),
-            "git_fetch",
-        )
-
-    branch = core.safe_branch(repository)
-    if _remote_branch_exists(repo, branch):
-        core.require_success(
-            core.run(
-                ["git", "checkout", "-B", branch, f"origin/{branch}"],
-                cwd=repo,
-                timeout=120,
-            ),
-            "git_checkout_existing_crystallization",
-        )
-        ancestry = "CONTINUE_REMOTE_CRYSTALLIZATION"
-    else:
-        core.require_success(
-            core.run(
-                ["git", "checkout", "-B", default_branch, f"origin/{default_branch}"],
-                cwd=repo,
-                timeout=120,
-            ),
-            "git_checkout_default",
-        )
-        core.require_success(
-            core.run(
-                ["git", "checkout", "-B", branch, f"origin/{default_branch}"],
-                cwd=repo,
-                timeout=120,
-            ),
-            "git_checkout_new_crystallization",
-        )
-        ancestry = "START_FROM_DEFAULT_BRANCH"
-    return repo, branch, ancestry
+    """Delegate continuation state to the shared source-preserving transport."""
+    return core.ensure_checkout_with_ancestry(repository, default_branch, root)
 
 
 def _safe_model(repo: Path) -> tuple[dict[str, Any] | None, str | None]:
@@ -118,12 +43,8 @@ def _proof(
 ) -> tuple[dict[str, Any], str, dict[str, Any] | None]:
     plan = model["plan"]
     test_ok, test_receipts = core.execute_commands(repo, plan["test_commands"], "test")
-    build_ok, build_receipts = core.execute_commands(
-        repo, plan["build_commands"], "build"
-    )
-    runtime_ok, runtime_receipts = core.execute_commands(
-        repo, plan["runtime_commands"], "runtime"
-    )
+    build_ok, build_receipts = core.execute_commands(repo, plan["build_commands"], "build")
+    runtime_ok, runtime_receipts = core.execute_commands(repo, plan["runtime_commands"], "runtime")
     deployment_result, deployment_receipt = core.deployment_proof(
         repo, plan["naturally_deployable"]
     )
@@ -167,8 +88,6 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
     implementer = core.invoke_implementer(repo, repository)
     worker_tail = (implementer["stdout"] + implementer["stderr"])[-4000:]
     if implementer["returncode"] != 0:
-        # The implementation attempt ran and failed. That is repository/work-unit
-        # truth, not a Swarm transport failure.
         return {
             "repository": repository,
             "status": "INCOMPLETE",
@@ -202,6 +121,7 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
             "reason": "CRYSTALLIZATION_MODEL_INVALID",
             "model_error": model_error,
             "remaining_gap_count": None,
+            "transport": core.get_last_transport_receipt(),
             "pr_url": pr_url,
             "worker_tail": worker_tail,
         }
@@ -276,6 +196,7 @@ def process(payload: Mapping[str, Any]) -> dict[str, Any]:
         "proof_error": proof_error,
         "deployment_result": deployment_result,
         "deployment_receipt": deployment_receipt,
+        "transport": core.get_last_transport_receipt(),
         "pr_url": pr_url,
         "worker_tail": worker_tail,
     }
@@ -291,9 +212,6 @@ def main() -> int:
             raise ValueError("task_payload_must_be_object")
         result = process(payload)
         print(json.dumps(result, sort_keys=True))
-        # IMPORTANT: truthful repository status is data. A valid work-unit
-        # result always exits 0; only protocol/infrastructure failure retries at
-        # the Swarm transport layer.
         return 0
     except Exception as exc:
         print(
