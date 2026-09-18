@@ -51,5 +51,12 @@
     "no guarantee that worker prompts can complete every repository",
     "no deployment claim without repository-specific deployment evidence"
   ],
-  "evolution_cursor": "fresh_exact_head_ci_then_surface_reconciliation"
+  "evolution_cursor": "fresh_exact_head_ci_then_surface_reconciliation",
+  "operator_contract": "OPERATOR_CONTRACT.md",
+  "gate_policy": {
+    "mode": "enrichment",
+    "stoppers_forbidden": true,
+    "promotion_ladder_forbidden": true,
+    "note": "Helix PROMOTED/demoted ladder retired; checks enrich only."
+  }
 }
